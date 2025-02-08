@@ -30,7 +30,9 @@ func removeDoubleSlash(text string) string {
 }
 
 // .Path
-func (mux *XXSMux) Pattern(patterns map[string]http.Handler, patternPrefix string) {
+func (mux *XXSMux) Pattern(patterns map[string]http.Handler) {
+	patternPrefix := mux.patternPrefix
+	mux.patternPrefix = ""
 	mux.patternPrefix = mux.root.patternPrefix + "/"
 
 	for _, subMux := range mux.parent.subXXMux {
@@ -73,6 +75,11 @@ func uniqueMW(input []Middleware) []Middleware {
 	}
 
 	return result
+}
+
+func (mux *XXSMux) Prefix(prefix string) {
+	// TODO: validate prefix (check if first char is `/`)
+	mux.patternPrefix = prefix
 }
 
 func (mux *XXSMux) Subrouter() *XXSMux {
@@ -125,44 +132,52 @@ func main() {
 	router.Use(Middleware1, Middleware4)
 
 	// /v1/test
+	router.Prefix("v1")
 	router.Pattern(map[string]http.Handler{
 		"GET /test": http.HandlerFunc(greet),
-	}, "v1")
+		"GET /a":    http.HandlerFunc(greet),
+		"GET /b":    http.HandlerFunc(greet),
+	})
 
 	// /v1/v2/{instance_id}/test
 	v1Router := router.Subrouter()
+	v1Router.Prefix("v2/{instance_id}")
 	v1Router.Pattern(map[string]http.Handler{
 		"GET /test": http.HandlerFunc(greet),
-	}, "v2/{instance_id}")
+	})
 
 	// /v1/v2/{instance_id}/foo
 	v12Router := v1Router.Subrouter()
 	v12Router.Use(Middleware3)
+	// v12Router.Prefix("")
 	v12Router.Pattern(map[string]http.Handler{
 		"GET /foo": http.HandlerFunc(greet),
-	}, "")
+	})
 
 	// /v1/v2/{instance_id}/foobar/foo
 	v13Router := v12Router.Subrouter()
 	v13Router.Use(Middleware3)
+	v13Router.Prefix("foobar")
 	v13Router.Pattern(map[string]http.Handler{
 		"GET /bar": http.HandlerFunc(greet),
-	}, "foobar")
+	})
 
 	// /v1/boo/test
 	v2Router := router.Subrouter()
+	v2Router.Prefix("boo")
 
 	v2Router.Pattern(map[string]http.Handler{
 		"GET /test": http.HandlerFunc(greet),
-	}, "boo")
+	})
 	v2Router.Use(Middleware2)
 
 	// /v1/secret
 	adminRouter := router.Subrouter()
 	adminRouter.Use(AdminMiddleware)
+	// adminRouter.Prefix("")
 	adminRouter.Pattern(map[string]http.Handler{
 		"GET /secret": http.HandlerFunc(greet),
-	}, "")
+	})
 
 	defaultServeMux := http.DefaultServeMux
 
