@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 type XXSMux struct {
-	patterns      map[Pattern]http.Handler
+	patterns      map[string]http.Handler
 	patternPrefix string
 	middlewares   []Middleware
 	root          *XXSMux
@@ -18,13 +19,8 @@ type XXSMux struct {
 	subXXMux []*XXSMux
 }
 
-type Pattern struct {
-	Method string
-	Path   string
-}
-
 func NewXXSMux() *XXSMux {
-	mux := &XXSMux{patterns: map[Pattern]http.Handler{}}
+	mux := &XXSMux{patterns: map[string]http.Handler{}}
 	return mux
 }
 
@@ -34,7 +30,7 @@ func removeDoubleSlash(text string) string {
 }
 
 // .Path
-func (mux *XXSMux) Pattern(patterns map[Pattern]http.Handler, patternPrefix string) {
+func (mux *XXSMux) Pattern(patterns map[string]http.Handler, patternPrefix string) {
 	mux.patternPrefix = mux.root.patternPrefix + "/"
 
 	for _, subMux := range mux.parent.subXXMux {
@@ -54,10 +50,8 @@ func (mux *XXSMux) Pattern(patterns map[Pattern]http.Handler, patternPrefix stri
 	mux.patternPrefix += patternPrefix
 
 	for pattern, handler := range patterns {
-		mux.patterns[Pattern{
-			Method: pattern.Method,
-			Path:   removeDoubleSlash(mux.patternPrefix + pattern.Path),
-		}] = handler
+		// TODO: strings.Split could fail and not have 2 elements
+		mux.patterns[removeDoubleSlash(mux.patternPrefix+strings.Split(pattern, " ")[1])] = handler
 		fmt.Println("PATTTT:", mux.patterns)
 	}
 	mux.subXXMux = append(mux.subXXMux, mux)
@@ -114,7 +108,7 @@ func (mux *XXSMux) Build(defaultServeMux *http.ServeMux) {
 		if current.patterns != nil {
 			for pattern, handler := range current.patterns {
 				// pat[pattern] = handler
-				defaultServeMux.Handle(pattern.Method+" "+pattern.Path, NewHandler(current.middlewares...)(handler))
+				defaultServeMux.Handle(pattern, NewHandler(current.middlewares...)(handler))
 				fmt.Println("  Pattern:", pattern)
 			}
 		}
@@ -131,43 +125,43 @@ func main() {
 	router.Use(Middleware1, Middleware4)
 
 	// /v1/test
-	router.Pattern(map[Pattern]http.Handler{
-		{"GET", "/test"}: http.HandlerFunc(greet),
+	router.Pattern(map[string]http.Handler{
+		"GET /test": http.HandlerFunc(greet),
 	}, "v1")
 
 	// /v1/v2/{instance_id}/test
 	v1Router := router.Subrouter()
-	v1Router.Pattern(map[Pattern]http.Handler{
-		{"GET", "/test"}: http.HandlerFunc(greet),
+	v1Router.Pattern(map[string]http.Handler{
+		"GET /test": http.HandlerFunc(greet),
 	}, "v2/{instance_id}")
 
 	// /v1/v2/{instance_id}/foo
 	v12Router := v1Router.Subrouter()
 	v12Router.Use(Middleware3)
-	v12Router.Pattern(map[Pattern]http.Handler{
-		{"GET", "/foo"}: http.HandlerFunc(greet),
+	v12Router.Pattern(map[string]http.Handler{
+		"GET /foo": http.HandlerFunc(greet),
 	}, "")
 
 	// /v1/v2/{instance_id}/foobar/foo
 	v13Router := v12Router.Subrouter()
 	v13Router.Use(Middleware3)
-	v13Router.Pattern(map[Pattern]http.Handler{
-		{"GET", "/bar"}: http.HandlerFunc(greet),
+	v13Router.Pattern(map[string]http.Handler{
+		"GET /bar": http.HandlerFunc(greet),
 	}, "foobar")
 
 	// /v1/boo/test
 	v2Router := router.Subrouter()
 
-	v2Router.Pattern(map[Pattern]http.Handler{
-		{"GET", "/test"}: http.HandlerFunc(greet),
+	v2Router.Pattern(map[string]http.Handler{
+		"GET /test": http.HandlerFunc(greet),
 	}, "boo")
 	v2Router.Use(Middleware2)
 
 	// /v1/secret
 	adminRouter := router.Subrouter()
 	adminRouter.Use(AdminMiddleware)
-	adminRouter.Pattern(map[Pattern]http.Handler{
-		{"GET", "/secret"}: http.HandlerFunc(greet),
+	adminRouter.Pattern(map[string]http.Handler{
+		"GET /secret": http.HandlerFunc(greet),
 	}, "")
 
 	defaultServeMux := http.DefaultServeMux
