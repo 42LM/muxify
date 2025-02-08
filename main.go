@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// XXSMux is a simple builder for the http.DefaultServeMux.
 type XXSMux struct {
 	patterns      map[string]http.Handler
 	patternPrefix string
@@ -17,17 +18,29 @@ type XXSMux struct {
 	subXXSMux []*XXSMux
 }
 
+// Middleware represents an http.Handler wrapper to inject addional functionality.
+type Middleware func(http.Handler) http.Handler
+
+// NewXXSMux returns a new XXSMux.
 func NewXXSMux() *XXSMux {
 	mux := &XXSMux{patterns: map[string]http.Handler{}}
+	mux.root = mux
+	mux.parent = mux
 	return mux
 }
 
-func removeDoubleSlash(text string) string {
-	re := regexp.MustCompile(`//+`)
-	return re.ReplaceAllString(text, "/")
+// NewHandler returns an http.Handler wrapped with given middlewares.
+func NewHandler(mw ...Middleware) func(http.Handler) http.Handler {
+	return func(h http.Handler) http.Handler {
+		next := h
+		for _, m := range mw {
+			next = m(next)
+		}
+		return next
+	}
 }
 
-// .Path
+// Pattern registers hanglers for given patterns.
 func (mux *XXSMux) Pattern(patterns map[string]http.Handler) {
 	patternPrefix := mux.patternPrefix
 	mux.patternPrefix = ""
@@ -52,20 +65,28 @@ func (mux *XXSMux) Pattern(patterns map[string]http.Handler) {
 	for pattern, handler := range patterns {
 		// TODO: strings.Split could fail and not have 2 elements
 		mux.patterns[removeDoubleSlash(mux.patternPrefix+strings.Split(pattern, " ")[1])] = handler
-		fmt.Println("PATTTT:", mux.patterns)
 	}
 	mux.subXXSMux = append(mux.subXXSMux, mux)
 }
 
+// removeDoubleSlash cleans up strings for double slashes `//`.
+func removeDoubleSlash(text string) string {
+	re := regexp.MustCompile(`//+`)
+	return re.ReplaceAllString(text, "/")
+}
+
+// Use wraps a middleware to an XXSMux.
 func (mux *XXSMux) Use(middleware ...Middleware) {
 	mux.middlewares = append(mux.middlewares, middleware...)
 }
 
+// Prefix sets a prefix for the XXSMux.
 func (mux *XXSMux) Prefix(prefix string) {
 	// TODO: validate prefix (check if first char is `/`)
 	mux.patternPrefix = prefix
 }
 
+// Subrouter returns an XXSMux child.
 func (mux *XXSMux) Subrouter() *XXSMux {
 	subMux := NewXXSMux()
 	subMux.parent = mux
@@ -80,54 +101,56 @@ func (mux *XXSMux) Subrouter() *XXSMux {
 	return subMux
 }
 
-func (mux *XXSMux) Build(defaultServeMux *http.ServeMux) {
+// Build fills the given default serve mux with patterns and the connected handler.
+//
+// It simply calls http.Handle on the patterns and the connected handlers.
+func (mux *XXSMux) Build(defaultServeMux *http.ServeMux) []string {
 	queue := []*XXSMux{mux}
 	visited := make(map[*XXSMux]bool)
+	dataStream := make([]string, 0)
+	dataStream = append(dataStream, "Registered Patterns:\n")
 
 	for len(queue) > 0 {
 		current := queue[0]
 		queue = queue[1:]
 
 		if visited[current] {
-			continue // skip if already visited (prevents cycles)
+			continue
 		}
-		visited[current] = true // Mark as visited
+		visited[current] = true
 
-		// Process the current node
 		if current.patterns != nil {
 			for pattern, handler := range current.patterns {
-				// pat[pattern] = handler
+				dataStream = append(dataStream, fmt.Sprintf("%s", pattern))
 				defaultServeMux.Handle(pattern, NewHandler(current.middlewares...)(handler))
-				fmt.Println("  Pattern:", pattern)
 			}
 		}
 
-		// Enqueue children (sub-muxes)
 		queue = append(queue, current.subXXSMux...)
 	}
+
+	return dataStream
 }
 
 func main() {
 	router := NewXXSMux()
-	router.root = router
-	router.parent = router
 	router.Use(Middleware1, Middleware4)
 
 	// /v1/test
 	// /v1/a
 	// /v1/b
-	router.Prefix("v1")
+	router.Prefix("/v1")
 	router.Pattern(map[string]http.Handler{
-		"GET /test": http.HandlerFunc(greet),
-		"GET /a":    http.HandlerFunc(greet),
-		"GET /b":    http.HandlerFunc(greet),
+		"GET /test/{name}": http.HandlerFunc(greet),
+		"GET /a":           http.HandlerFunc(helloWorld),
+		"GET /b":           http.HandlerFunc(helloWorld),
 	})
 
 	// /v1/v2/{instance_id}/test
 	v1Router := router.Subrouter()
 	v1Router.Prefix("v2/{instance_id}")
 	v1Router.Pattern(map[string]http.Handler{
-		"GET /test": http.HandlerFunc(greet),
+		"GET /test": http.HandlerFunc(helloWorld),
 	})
 
 	// /v1/v2/{instance_id}/foo
@@ -135,7 +158,7 @@ func main() {
 	v12Router.Use(Middleware3)
 	// v12Router.Prefix("")
 	v12Router.Pattern(map[string]http.Handler{
-		"GET /foo": http.HandlerFunc(greet),
+		"GET /foo": http.HandlerFunc(helloWorld),
 	})
 
 	// /v1/v2/{instance_id}/foobar/foo
@@ -143,7 +166,7 @@ func main() {
 	v13Router.Use(Middleware3)
 	v13Router.Prefix("foobar")
 	v13Router.Pattern(map[string]http.Handler{
-		"GET /bar": http.HandlerFunc(greet),
+		"GET /bar": http.HandlerFunc(helloWorld),
 	})
 
 	// /v1/boo/test
@@ -151,7 +174,7 @@ func main() {
 	v2Router.Prefix("boo")
 
 	v2Router.Pattern(map[string]http.Handler{
-		"GET /test": http.HandlerFunc(greet),
+		"GET /test": http.HandlerFunc(helloWorld),
 	})
 	v2Router.Use(Middleware2)
 
@@ -160,14 +183,16 @@ func main() {
 	adminRouter.Use(AdminMiddleware)
 	// adminRouter.Prefix("")
 	adminRouter.Pattern(map[string]http.Handler{
-		"GET /secret": http.HandlerFunc(greet),
+		"GET /secret": http.HandlerFunc(secret),
 	})
 
 	defaultServeMux := http.DefaultServeMux
 
 	// build the default serve mux aka
 	// fill it with path patterns and the additional handlers
-	router.Build(defaultServeMux)
+	dataStream := router.Build(defaultServeMux)
+
+	fmt.Println(strings.Join(dataStream, "\n"))
 
 	s := http.Server{
 		Addr:    ":8080",
@@ -177,17 +202,8 @@ func main() {
 	s.ListenAndServe()
 }
 
-type Middleware func(http.Handler) http.Handler
-
-func NewHandler(mw ...Middleware) func(http.Handler) http.Handler {
-	return func(h http.Handler) http.Handler {
-		next := h
-		for _, m := range mw {
-			next = m(next)
-		}
-		return next
-	}
-}
+// dev test setup
+// TODO: remove when separating main from package xxsmux
 
 func greet(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("url.Path: %v\n", r.URL.Path)
@@ -211,12 +227,6 @@ func secret(w http.ResponseWriter, r *http.Request) {
 	fmt.Printf("url.RawPath: %v\n", r.URL.RawPath)
 	fmt.Printf("url.EscapedPath(): %v\n", r.URL.EscapedPath())
 	fmt.Fprintln(w, "Beep Boop Bob hello agent")
-}
-
-func Wrap(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		next.ServeHTTP(w, r)
-	})
 }
 
 func Middleware1(next http.Handler) http.Handler {
@@ -267,25 +277,4 @@ func AdminMiddleware(next http.Handler) http.Handler {
 			return
 		}
 	})
-}
-
-func Chain(base http.Handler, middleware ...func(http.Handler) http.Handler) http.Handler {
-	for _, m := range middleware {
-		base = m(base)
-	}
-	return base
-}
-
-func ChainRouter(base http.Handler, handlers ...http.Handler) http.Handler {
-	finalHandler := func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			next.ServeHTTP(w, r) // Call the next handler
-		})
-	}
-
-	for _, handler := range handlers {
-		base = finalHandler(handler)
-	}
-
-	return base
 }
