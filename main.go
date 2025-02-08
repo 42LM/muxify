@@ -14,8 +14,6 @@ type XXSMux struct {
 	root          *XXSMux
 	parent        *XXSMux
 
-	idx int
-
 	subXXMux []*XXSMux
 }
 
@@ -84,7 +82,6 @@ func (mux *XXSMux) Prefix(prefix string) {
 
 func (mux *XXSMux) Subrouter() *XXSMux {
 	subMux := NewXXSMux()
-	subMux.idx = len(mux.subXXMux) - 1
 	subMux.parent = mux
 	subMux.root = mux.root
 
@@ -111,7 +108,6 @@ func (mux *XXSMux) Build(defaultServeMux *http.ServeMux) {
 		visited[current] = true // Mark as visited
 
 		// Process the current node
-		fmt.Println("Visiting mux with index:", current.idx)
 		if current.patterns != nil {
 			for pattern, handler := range current.patterns {
 				// pat[pattern] = handler
