@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -199,7 +200,10 @@ func main() {
 		Handler: defaultServeMux,
 	}
 
-	s.ListenAndServe()
+	err := s.ListenAndServe()
+	if err != nil {
+		log.Fatalf("internal server error: %v", err)
+	}
 }
 
 // dev test setup
