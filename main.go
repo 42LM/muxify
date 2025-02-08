@@ -14,7 +14,7 @@ type XXSMux struct {
 	root          *XXSMux
 	parent        *XXSMux
 
-	subXXMux []*XXSMux
+	subXXSMux []*XXSMux
 }
 
 func NewXXSMux() *XXSMux {
@@ -33,15 +33,15 @@ func (mux *XXSMux) Pattern(patterns map[string]http.Handler) {
 	mux.patternPrefix = ""
 	mux.patternPrefix = mux.root.patternPrefix + "/"
 
-	for _, subMux := range mux.parent.subXXMux {
+	for _, subMux := range mux.parent.subXXSMux {
 		if mux.parent == mux.root {
 			if subMux == mux {
-				for _, subSubMux := range subMux.subXXMux {
+				for _, subSubMux := range subMux.subXXSMux {
 					mux.patternPrefix = subSubMux.patternPrefix + "/"
 				}
 			}
 		} else {
-			for _, subSubMux := range subMux.subXXMux {
+			for _, subSubMux := range subMux.subXXSMux {
 				mux.patternPrefix = subSubMux.patternPrefix + "/"
 			}
 		}
@@ -54,25 +54,11 @@ func (mux *XXSMux) Pattern(patterns map[string]http.Handler) {
 		mux.patterns[removeDoubleSlash(mux.patternPrefix+strings.Split(pattern, " ")[1])] = handler
 		fmt.Println("PATTTT:", mux.patterns)
 	}
-	mux.subXXMux = append(mux.subXXMux, mux)
+	mux.subXXSMux = append(mux.subXXSMux, mux)
 }
 
 func (mux *XXSMux) Use(middleware ...Middleware) {
 	mux.middlewares = append(mux.middlewares, middleware...)
-}
-
-func uniqueMW(input []Middleware) []Middleware {
-	seen := make(map[*Middleware]bool)
-	result := []Middleware{}
-
-	for _, str := range input {
-		if !seen[&str] {
-			seen[&str] = true
-			result = append(result, str)
-		}
-	}
-
-	return result
 }
 
 func (mux *XXSMux) Prefix(prefix string) {
@@ -89,7 +75,7 @@ func (mux *XXSMux) Subrouter() *XXSMux {
 		subMux.middlewares = append(subMux.middlewares, mux.root.middlewares...)
 	}
 
-	mux.subXXMux = append(mux.subXXMux, subMux)
+	mux.subXXSMux = append(mux.subXXSMux, subMux)
 
 	return subMux
 }
@@ -117,7 +103,7 @@ func (mux *XXSMux) Build(defaultServeMux *http.ServeMux) {
 		}
 
 		// Enqueue children (sub-muxes)
-		queue = append(queue, current.subXXMux...)
+		queue = append(queue, current.subXXSMux...)
 	}
 }
 
@@ -128,6 +114,8 @@ func main() {
 	router.Use(Middleware1, Middleware4)
 
 	// /v1/test
+	// /v1/a
+	// /v1/b
 	router.Prefix("v1")
 	router.Pattern(map[string]http.Handler{
 		"GET /test": http.HandlerFunc(greet),
@@ -177,15 +165,9 @@ func main() {
 
 	defaultServeMux := http.DefaultServeMux
 
-	// Another example: collect all patterns
-	// allPatterns := make(map[Pattern]http.Handler)
+	// build the default serve mux aka
+	// fill it with path patterns and the additional handlers
 	router.Build(defaultServeMux)
-
-	// fmt.Println("\nAll Patterns collected:", allPatterns)
-
-	// for pattern, handler := range allPatterns {
-	// 	defaultServeMux.Handle(pattern.Method+" "+pattern.Path, NewHandler()(handler))
-	// }
 
 	s := http.Server{
 		Addr:    ":8080",
