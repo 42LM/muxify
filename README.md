@@ -1,3 +1,7 @@
+<p align="center">
+  <img width="300" alt="XXSMuX2" src="https://github.com/user-attachments/assets/eaf2317b-8edf-4331-8dec-3c54976a865e" />
+</p>
+
 # xxsmux
 The `xxsmux.defaultServeMuxBuilder` acts as a builder for the `http.DefaultServeMux`.
 
