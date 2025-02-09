@@ -1,3 +1,9 @@
+// Package xxsmux implements functionality for building http.DefaultServeMux.
+//
+// The xxsmux package is a default serve mux builder.
+// Build patterns, handlers and wrap middlewares conveniently upfront.
+// The xxsmux.defaultServeMuxBuilder acts as a builder for the http.DefaultServeMux.
+// The overall goal of this package is to build the http.DefaultServeMux with pattern/path prefixes and middleware wired in.
 package xxsmux
 
 import (
@@ -8,12 +14,19 @@ import (
 
 // defaultServeMuxBuilder is a simple builder for the http.DefaultServeMux.
 type defaultServeMuxBuilder struct {
-	patterns      map[string]http.Handler
+	// patterns represent the given patterns to `http.Handle`/`http.HandleFunc`.
+	patterns map[string]http.Handler
+	// patternPrefix represent the prefix of the pattern of a subrouter.
 	patternPrefix string
-	middlewares   []middleware
-	root          *defaultServeMuxBuilder
-	parent        *defaultServeMuxBuilder
+	// middlewares represent the middlewares that wrap the subrouter.
+	middlewares []middleware
+	// root always points to the root node of the default servce mux builder.
+	root *defaultServeMuxBuilder
+	// parent always points to the parent node.
+	// For the `root` field the parent would also be `root`.
+	parent *defaultServeMuxBuilder
 
+	// subDefaultServeMuxBuilder stores the subrouters of the main router.
 	subDefaultServeMuxBuilder []*defaultServeMuxBuilder
 }
 
