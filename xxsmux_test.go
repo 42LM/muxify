@@ -33,7 +33,7 @@ func Test_Bootstrap(t *testing.T) {
 	for tname, tc := range testCases {
 		t.Run(tname, func(t *testing.T) {
 			// create the default service mux builder
-			b := xxsmux.NewDefaultServeMuxBuilder()
+			b := xxsmux.New()
 
 			// apply some middleware
 			if tc.middleware != nil {
@@ -139,7 +139,7 @@ func Test_MuxWithSubrouters_MiddlewareChaining(t *testing.T) {
 	}
 	for tname, tc := range testCases {
 		t.Run(tname, func(t *testing.T) {
-			b := xxsmux.NewDefaultServeMuxBuilder()
+			b := xxsmux.New()
 			if tc.middlewareB1 != nil {
 				for _, mw := range tc.middlewareB1 {
 					b.Use(mw)
@@ -310,7 +310,7 @@ func Test_MuxWithSubrouters(t *testing.T) {
 	}
 	for tname, tc := range testCases {
 		t.Run(tname, func(t *testing.T) {
-			b := xxsmux.NewDefaultServeMuxBuilder()
+			b := xxsmux.New()
 			if tc.middlewareB1 != nil {
 				for _, mw := range tc.middlewareB1 {
 					b.Use(mw)

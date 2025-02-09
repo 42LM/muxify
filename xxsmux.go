@@ -33,9 +33,8 @@ type defaultServeMuxBuilder struct {
 // middleware represents an http.Handler wrapper to inject addional functionality.
 type middleware func(http.Handler) http.Handler
 
-// TODO: rename to just `New` when in pkg `defaultServeMuxBuilder.New`
-// NewDefaultServeMuxBuilder returns a new defaultServeMuxBuilder.
-func NewDefaultServeMuxBuilder() *defaultServeMuxBuilder {
+// New returns a new defaultServeMuxBuilder.
+func New() *defaultServeMuxBuilder {
 	b := &defaultServeMuxBuilder{patterns: map[string]http.Handler{}}
 	b.root = b
 	b.parent = b
@@ -100,7 +99,7 @@ func (b *defaultServeMuxBuilder) Prefix(prefix string) {
 
 // Subrouter returns an defaultServeMuxBuilder child.
 func (b *defaultServeMuxBuilder) Subrouter() *defaultServeMuxBuilder {
-	subBuilder := NewDefaultServeMuxBuilder()
+	subBuilder := New()
 	subBuilder.parent = b
 	subBuilder.root = b.root
 

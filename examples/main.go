@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	router := xxsmux.NewDefaultServeMuxBuilder()
+	router := xxsmux.New()
 	router.Use(Middleware1, Middleware4)
 
 	// /v1/test
