@@ -28,3 +28,4 @@ go.work.sum
 
 # ignore examples for dev tests
 examples/
+assets/
