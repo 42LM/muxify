@@ -8,7 +8,15 @@ The overall goal of this package is to build the `http.DefaultServeMux` with pat
 
 ## Dev
 ```sh
+git clone git@github.com:42LM/xxsmux.git
+```
+
+```sh
 go run examples/main.go
+```
+
+```sh
+go test ./... -v
 ```
 
 ## Example curl requests
