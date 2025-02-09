@@ -9,19 +9,19 @@ import (
 
 func Test_newHandler(t *testing.T) {
 	testCases := map[string]struct {
-		middleware []middleware
+		middleware []Middleware
 		expBody    string
 	}{
 		"no middleware": {
-			middleware: []middleware{},
+			middleware: []Middleware{},
 			expBody:    "test response",
 		},
 		"wrap multiple middlewares": {
-			middleware: []middleware{testMiddleware1, testMiddleware2},
+			middleware: []Middleware{testMiddleware1, testMiddleware2},
 			expBody:    "MW2:MW1:test response",
 		},
 		"wrap middleware": {
-			middleware: []middleware{testMiddleware3},
+			middleware: []Middleware{testMiddleware3},
 			expBody:    "MW3:test response",
 		},
 	}
