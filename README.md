@@ -7,6 +7,8 @@ The `xxsmux.defaultServeMuxBuilder` acts as a builder for the `http.DefaultServe
 
 The overall goal of this package is to build the `http.DefaultServeMux` with pattern/path prefixes and middleware wired in.
 
+The aim is to have a very small helper pkg that makes the use of the go [`http.DefaultServeMux`](https://pkg.go.dev/net/http#DefaultServeMux) easier to use.
+
 > [!CAUTION]
 > 🚧 Work in progess 🚧
 >
