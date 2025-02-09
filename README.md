@@ -145,3 +145,30 @@ curl localhost:8080/v1/admin/secret/max -u
 ```
 > [!TIP]
 > When asked for the password just enter. The password is not checked.
+
+## Motivation
+The motivation for this project derives from the following two problems with the enhanced routing patterns for the `http.DefaultServeMux`:
+
+### 1. Every single handler needs to be wrapped with middleware. This leads to alot of repeating code and moreover to very unreadable code, too. IMHO it already starts to get out of hands when one handler needs to be wrapped with more than four middlewares.
+
+> To give a little bit more context on this topic just take a look at the following code example:
+> ```go
+> mux.Handle("/foo", Middleware1(Middleware2(Middleware3(Middleware4(Middleware5(Middleware6(fooHandler)))))))
+> ```
+> So even for middlewares that maybe every handler should have (e.g. auth) this is pretty cumbersome to wrap every single handler in it.
+>
+> 💡 **XXSMuX** provides a convenient way of wrapping patterns/routes with middleware and subrouters take over these middlewares.
+
+### 2. No subrouter functionality.
+
+> It is not possible to use the `http.StripPrefix` without defining a pattern for the handler, but sometimes i want to just create a new subrouter from whatever router state.
+>```go
+> router.Handle("GET /ping/", makePingHandler(endpoints, options))
+>
+> subrouterV1 := http.NewServeMux()
+> subrouterV1.Handle("/v1/", http.StripPrefix("/v1", router))
+> ```
+> Not being able to use a subrouter adds up to the other problem.
+> A subrouter would help wrapping certain patterns/routes with middleware. A subrouter being created from another router/subrouter always inherits the middlewares.
+>
+> 💡 **XXSMuX** enables the possibility of defining subrouters.
