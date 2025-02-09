@@ -16,134 +16,64 @@ The `xxsmux.defaultServeMuxBuilder` acts as a builder for the `http.DefaultServe
 
 The overall goal of this package is to build the `http.DefaultServeMux` with pattern/path prefixes and middleware wired in.
 
-The aim is to have a very small helper pkg that makes the use of the go [`http.DefaultServeMux`](https://pkg.go.dev/net/http#DefaultServeMux) easier to use.
+The aim is to have a very small helper pkg that makes the use of the go [`http.DefaultServeMux`](https://pkg.go.dev/net/http#DefaultServeMux) easier.
 
 > [!CAUTION]
 > 🚧 Work in progess 🚧
 >
-> Only works for go version `^1.22`.
+> Only works for go version above `^1.22`.
 > > For more info: Go 1.22 introduced [enhanced routing patterns](https://tip.golang.org/doc/go1.22#enhanced_routing_patterns)
 
 ## Usage
+### Install
 ```sh
 go get github.com/42LM/xxsmux
 ```
 
 ### Example
+The **XXSMuX** slightly adopts the syntax of [gorilla/mux](https://github.com/gorilla/mux).
+It uses a common building block to create a router/subrouter.
+
+It all starts with creating the `xxsmux.DefaultServeMuxBuilder`
 ```go
-package main
+router := xxsmux.New()
+```
 
-import (
-	"fmt"
-	"log"
-	"net/http"
+Setup the router (setup prefix, middleware and pattern)
+```go
+router.Prefix("/v1") // optional
+router.Use(AuthMiddleware) // optional
+router.Pattern(map[string]http.Handler{
+    "GET /hello/{name}": handler,
+    "GET /foo": handler,
+    "GET /bar": handler,
+})
+```
 
-	"github.com/42LM/xxsmux"
-)
+Create a subrouter from the root router
+```go
+subRouter := router.Subrouter()
+subRouter.Use(AdminMiddleware, ChorsMiddleware) // optional
+subRouter.Prefix("admin") // optional
+subRouter.Pattern(map[string]http.Handler{
+    "GET /secret": handler,
+})
+```
 
-func main() {
-	router := xxsmux.New()
-	router.Use(Middleware1)
+Build the default http serve mux
+```go
+defaultServeMux := router.Build(defaultServeMux)
+```
 
-	// /hello/{name}
-	// /a
-	// /b
-	router.Pattern(map[string]http.Handler{
-		"GET /hello/{name}": http.HandlerFunc(greet),
-		"GET /foo":          http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("foo")) }),
-		"GET /bar":          http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("bar")) }),
-	})
-
-	// /v1/foobar
-	v1Router := router.Subrouter()
-	v1Router.Prefix("v1")
-	v1Router.Pattern(map[string]http.Handler{
-		"GET /foobar": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("foobar")) }),
-	})
-
-	// /barfoo
-	v2RouterNoPrefix := router.Subrouter()
-	v2RouterNoPrefix.Pattern(map[string]http.Handler{
-		"GET /barfoo": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("barfoo")) }),
-	})
-
-	// /v1/admin/secret/{name}
-	adminRouter := v1Router.Subrouter()
-	adminRouter.Use(AdminMiddleware)
-	adminRouter.Prefix("admin")
-	adminRouter.Pattern(map[string]http.Handler{
-		"GET /secret/{name}": http.HandlerFunc(greet),
-	})
-
-	// build the default serve mux aka
-	// fill it with path patterns and the additional handlers
-	defaultServeMux := router.Build()
-
-	s := http.Server{
-		Addr:    ":8080",
-		Handler: defaultServeMux,
-	}
-
-	err := s.ListenAndServe()
-	if err != nil {
-		log.Fatalf("internal server error: %v", err)
-	}
+Use it as usual
+```go
+s := http.Server{
+    Addr:    ":8080",
+    Handler: defaultServeMux,
 }
 
-func greet(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("url.Path: %v\n", r.URL.Path)
-	fmt.Printf("url.RawPath: %v\n", r.URL.RawPath)
-	fmt.Printf("url.EscapedPath(): %v\n", r.URL.EscapedPath())
-	name := r.PathValue("name")
-	fmt.Fprintf(w, "Hello %s", name)
-}
-
-func Middleware1(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "HELLO FROM MIDDLEWARE #1")
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func AdminMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "HELLO FROM ADMIN MIDDLEWARE")
-
-		usr, _, ok := r.BasicAuth()
-		if !ok {
-			fmt.Fprintln(w, "⚠️ RESTRICTED AREA")
-			return
-		}
-		if usr == "007" {
-			next.ServeHTTP(w, r)
-		} else {
-			fmt.Fprintln(w, "AGENT WHO??? 🤣")
-			return
-		}
-	})
-}
+s.ListenAndServe()
 ```
-
-### Example curl requests
-Example curl requests for the above example.
-
-```sh
-curl localhost:8080/hello/max
-```
-```sh
-curl localhost:8080/a
-curl localhost:8080/b
-```
-```sh
-curl localhost:8080/v1/foobar
-curl localhost:8080/barfoo
-```
-```sh
-curl localhost:8080/v1/admin/secret/max -u
-```
-> [!TIP]
-> When asked for the password just enter. The password is not checked.
 
 ## Motivation
 The motivation for this project derives from the following two problems with the enhanced routing patterns for the `http.DefaultServeMux`:
