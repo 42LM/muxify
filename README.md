@@ -1,22 +1,14 @@
-<p align="center">
-  <img width="225" alt="XXSMuX2" src="https://github.com/user-attachments/assets/5b1d6123-55c9-4e3f-81ee-51ffbea3f9d5" />
-</p>
+# xxsmux
+![example3](https://github.com/42LM/xxsmux/actions/workflows/test.yaml/badge.svg)
+[![](https://godoc.org/github.com/42LM/xxsmux?status.svg)](http://godoc.org/github.com/42LM/xxsmux)
 
+<img width="150" alt="XXSMuX2" src="https://github.com/user-attachments/assets/5b1d6123-55c9-4e3f-81ee-51ffbea3f9d5" />
+<br>
 <br>
 
-<div align="center">
+The _**xxsmux**_ package offers a convenient way to build a default [`http.ServeMux`](https://pkg.go.dev/net/http#ServeMux). Build patterns, connect handlers, wrap path prefixes and middlewares upfront. Create subrouters from routers that inherit the middleware and path prefix setup from the parent router.
 
-  ![example3](https://github.com/42LM/xxsmux/actions/workflows/test.yaml/badge.svg)
-  [![](https://godoc.org/github.com/42LM/xxsmux?status.svg)](http://godoc.org/github.com/42LM/xxsmux)
-
-</div>
-
-# xxsmux 🤏
-The `xxsmux.defaultServeMuxBuilder` acts as a builder for the `http.DefaultServeMux`.
-
-The overall goal of this package is to build the `http.DefaultServeMux` with pattern/path prefixes and middleware wired in.
-
-The aim is to have a very small helper pkg that makes the use of the go [`http.DefaultServeMux`](https://pkg.go.dev/net/http#DefaultServeMux) easier.
+The purpose of this package is to build a golang default serve mux and is not a standalone multiplexer. It rather helps to create the default serve mux without too much repition in code.
 
 > [!CAUTION]
 > 🚧 Work in progess 🚧
@@ -24,14 +16,23 @@ The aim is to have a very small helper pkg that makes the use of the go [`http.D
 > Only works for go version above `^1.22`.
 > > For more info: Go 1.22 introduced [enhanced routing patterns](https://tip.golang.org/doc/go1.22#enhanced_routing_patterns)
 
-## Usage
-### Install
+---
+
+* [Install](#install)
+* [Example](#example)
+* [Motivation](#motivation)
+
+> More examples can be found in the [wiki](https://github.com/42LM/xxsmux/wiki/Examples)
+
+---
+
+## Install
 ```sh
 go get github.com/42LM/xxsmux
 ```
 
-### Example
-The **XXSMuX** slightly adopts the syntax of [gorilla/mux](https://github.com/gorilla/mux).
+## Example
+_**xxsmux**_ slightly adopts the syntax of [gorilla/mux](https://github.com/gorilla/mux).
 It uses a common building block to create a router/subrouter.
 
 It all starts with creating the `xxsmux.DefaultServeMuxBuilder`
@@ -76,6 +77,8 @@ s.ListenAndServe()
 ```
 
 ## Motivation
+First of all this project exists for the sake of actually using the golang http default serve mux <3.
+
 The motivation for this project derives from the following two problems with the enhanced routing patterns for the `http.DefaultServeMux`:
 
 ### 1. Every single handler needs to be wrapped with middleware. This leads to alot of repeating code and moreover to very unreadable code, too. IMHO it already starts to get out of hands when one handler needs to be wrapped with more than four middlewares.
@@ -86,7 +89,7 @@ The motivation for this project derives from the following two problems with the
 > ```
 > So even for middlewares that maybe every handler should have (e.g. auth) this is pretty cumbersome to wrap every single handler in it.
 >
-> 💡 **XXSMuX** provides a convenient way of wrapping patterns/routes with middleware and subrouters take over these middlewares.
+> 💡 _**xxsmux**_ provides a convenient way of wrapping patterns/routes with middleware and subrouters take over these middlewares.
 
 ### 2. No subrouter functionality.
 
@@ -100,4 +103,4 @@ The motivation for this project derives from the following two problems with the
 > Not being able to use a subrouter adds up to the other problem.
 > A subrouter would help wrapping certain patterns/routes with middleware. A subrouter being created from another router/subrouter always inherits the middlewares.
 >
-> 💡 **XXSMuX** enables the possibility of defining subrouters.
+> 💡 _**xxsmux**_ enables the possibility of defining subrouters.
