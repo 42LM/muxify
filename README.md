@@ -1,5 +1,6 @@
 # xxsmux
 ![example3](https://github.com/42LM/xxsmux/actions/workflows/test.yaml/badge.svg)
+[![codecov](https://codecov.io/gh/42LM/xxsmux/graph/badge.svg?token=6CIY6SU7MJ)](https://codecov.io/gh/42LM/xxsmux)
 [![](https://godoc.org/github.com/42LM/xxsmux?status.svg)](http://godoc.org/github.com/42LM/xxsmux)
 
 <img width="150" alt="XXSMuX2" src="https://github.com/user-attachments/assets/5b1d6123-55c9-4e3f-81ee-51ffbea3f9d5" />
