@@ -15,7 +15,7 @@ jobs:
           go-version: ${{matrix.go-version}}
 
       - name: Run tests and generate coverage
-        run: go test -v ./... -coverprofile=coverage.out
+        run: go test -v -coverprofile=coverage.out -coverpkg=.
 
       - name: Check coverage threshold
         run: |
