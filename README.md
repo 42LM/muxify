@@ -5,6 +5,9 @@ The overall goal of this package is to build the `http.DefaultServeMux` with pat
 
 > [!CAUTION]
 > 🚧 Work in progess 🚧
+>
+> Only works for go version `^1.22`.
+> > For more info: Go 1.22 introduced [enhanced routing patterns](https://tip.golang.org/doc/go1.22#enhanced_routing_patterns)
 
 ## Dev
 ```sh
