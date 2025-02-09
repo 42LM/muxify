@@ -23,3 +23,6 @@ jobs:
           if (( $(echo "$coverage < 80.0" | bc -l) )); then
             exit 1
           fi
+
+      - name: Go vet
+        run: go vet ./...
