@@ -1,4 +1,6 @@
 // Example for execution and dev testing
+//
+// TODO: remove when releasing, write examples into readme file!
 package main
 
 import (
