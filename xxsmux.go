@@ -115,12 +115,9 @@ func (b *defaultServeMuxBuilder) Subrouter() *defaultServeMuxBuilder {
 // Build fills the given default serve mux with patterns and the connected handler.
 //
 // It simply calls http.Handle on the patterns and the connected handlers.
-func (b *defaultServeMuxBuilder) Build(defaultServeMux *http.ServeMux) []string {
+func (b *defaultServeMuxBuilder) Build(defaultServeMux *http.ServeMux) {
 	queue := []*defaultServeMuxBuilder{b}
 	visited := make(map[*defaultServeMuxBuilder]bool)
-	// TODO: remove when moving to actual pkg
-	dataStream := make([]string, 0)
-	dataStream = append(dataStream, "Registered Patterns:\n")
 
 	for len(queue) > 0 {
 		current := queue[0]
@@ -133,13 +130,10 @@ func (b *defaultServeMuxBuilder) Build(defaultServeMux *http.ServeMux) []string 
 
 		if current.patterns != nil {
 			for pattern, handler := range current.patterns {
-				dataStream = append(dataStream, pattern)
 				defaultServeMux.Handle(pattern, newHandler(current.middlewares...)(handler))
 			}
 		}
 
 		queue = append(queue, current.subDefaultServeMuxBuilder...)
 	}
-
-	return dataStream
 }
