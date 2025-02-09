@@ -1,7 +1,4 @@
-// The defaultServeMuxBuilder acts as a builder for the http.DefaultServeMux.
-//
-// The overall goal of this package is to build the http.DefaultServeMux
-// with pattern/path prefixes and middleware wired in.
+// Example for execution and dev testing
 package main
 
 import (
