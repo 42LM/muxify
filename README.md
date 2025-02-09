@@ -1,8 +1,17 @@
 <p align="center">
-  <img width="300" alt="XXSMuX2" src="https://github.com/user-attachments/assets/eaf2317b-8edf-4331-8dec-3c54976a865e" />
+  <img width="225" alt="XXSMuX2" src="https://github.com/user-attachments/assets/5b1d6123-55c9-4e3f-81ee-51ffbea3f9d5" />
 </p>
 
-# xxsmux
+<br>
+
+<div align="center">
+
+  ![example3](https://github.com/42LM/xxsmux/actions/workflows/test.yaml/badge.svg)
+  [![](https://godoc.org/github.com/42LM/xxsmux?status.svg)](http://godoc.org/github.com/42LM/xxsmux)
+
+</div>
+
+# xxsmux 🤏
 The `xxsmux.defaultServeMuxBuilder` acts as a builder for the `http.DefaultServeMux`.
 
 The overall goal of this package is to build the `http.DefaultServeMux` with pattern/path prefixes and middleware wired in.
