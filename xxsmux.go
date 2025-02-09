@@ -112,10 +112,10 @@ func (b *DefaultServeMuxBuilder) Subrouter() *DefaultServeMuxBuilder {
 	return subBuilder
 }
 
-// Build fills the given default serve mux with patterns and the connected handler.
-//
-// It simply calls http.Handle on the patterns and the connected handlers.
-func (b *DefaultServeMuxBuilder) Build(defaultServeMux *http.ServeMux) {
+// Build constructs an http.ServeMux with the patterns, handlers and middlewares
+// from the DefaultServeMuxBuilder.
+func (b *DefaultServeMuxBuilder) Build() *http.ServeMux {
+	defaultServeMux := http.ServeMux{}
 	queue := []*DefaultServeMuxBuilder{b}
 	visited := make(map[*DefaultServeMuxBuilder]bool)
 
@@ -136,4 +136,6 @@ func (b *DefaultServeMuxBuilder) Build(defaultServeMux *http.ServeMux) {
 
 		queue = append(queue, current.SubDefaultServeMuxBuilder...)
 	}
+
+	return &defaultServeMux
 }

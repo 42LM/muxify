@@ -51,8 +51,7 @@ func Test_Bootstrap(t *testing.T) {
 			})
 
 			// build http default serve mux
-			mux := &http.ServeMux{}
-			b.Build(mux)
+			mux := b.Build()
 
 			server := httptest.NewServer(mux)
 			defer server.Close()
@@ -178,8 +177,7 @@ func Test_MuxWithSubrouters_MiddlewareChaining(t *testing.T) {
 			})
 
 			// build http default serve mux
-			mux := &http.ServeMux{}
-			b.Build(mux)
+			mux := b.Build()
 
 			server := httptest.NewServer(mux)
 			defer server.Close()
@@ -357,8 +355,7 @@ func Test_MuxWithSubrouters(t *testing.T) {
 			})
 
 			// build http default serve mux
-			mux := &http.ServeMux{}
-			b.Build(mux)
+			mux := b.Build()
 
 			server := httptest.NewServer(mux)
 			defer server.Close()

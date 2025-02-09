@@ -77,8 +77,7 @@ func main() {
 
 	// build the default serve mux aka
 	// fill it with path patterns and the additional handlers
-	defaultServeMux := http.DefaultServeMux
-	router.Build(defaultServeMux)
+	defaultServeMux := router.Build()
 
 	s := http.Server{
 		Addr:    ":8080",
