@@ -59,12 +59,9 @@ subRouter.Pattern(map[string]http.Handler{
 })
 ```
 
-Build the default http serve mux (returns error when called on a subrouter)
+Build the default http serve mux (always uses root `DefaultServeMuxBuilder` node)
 ```go
-defaultServeMux, err := router.Build(defaultServeMux)
-if err != nil {
-    // handle err
-}
+defaultServeMux := router.Build(defaultServeMux)
 ```
 
 Use it as usual
