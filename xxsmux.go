@@ -80,13 +80,13 @@ func (b *DefaultServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
 		var patternPath string
 		switch len(tmpPattern) {
 		case 2:
-			method = tmpPattern[0]
+			method = tmpPattern[0] + " "
 			patternPath = tmpPattern[1]
 		default:
 			patternPath = tmpPattern[0]
 		}
 
-		b.Patterns[method+" "+removeDoubleSlash(b.PatternPrefix+patternPath)] = handler
+		b.Patterns[method+removeDoubleSlash(b.PatternPrefix+patternPath)] = handler
 	}
 	b.SubDefaultServeMuxBuilder = append(b.SubDefaultServeMuxBuilder, b)
 }
