@@ -41,24 +41,21 @@ It all starts with creating the `xxsmux.DefaultServeMuxBuilder`
 router := xxsmux.New()
 ```
 
-Setup the router (setup prefix, middleware and pattern)
+Setup the router
 ```go
-router.Prefix("/v1") // optional
-router.Use(AuthMiddleware) // optional
 router.Pattern(map[string]http.Handler{
-    "GET /hello/{name}": handler,
-    "GET /foo": handler,
-    "GET /bar": handler,
+    "GET /": notFoundHandler,
 })
 ```
 
-Create a subrouter from the root router
+Create a subrouter from the root router (prefix and middleware are optional)
 ```go
 subRouter := router.Subrouter()
-subRouter.Use(AdminMiddleware, ChorsMiddleware) // optional
-subRouter.Prefix("admin") // optional
+subRouter.Use(AdminMiddleware, ChorsMiddleware)
+subRouter.Prefix("admin")
 subRouter.Pattern(map[string]http.Handler{
-    "GET /secret": handler,
+    "POST /{id}": createAdminHandler,
+    "DELETE /{id}": deleteAdminHandler,
 })
 ```
 

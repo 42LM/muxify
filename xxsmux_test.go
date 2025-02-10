@@ -11,23 +11,55 @@ import (
 
 func Test_Bootstrap(t *testing.T) {
 	testCases := map[string]struct {
-		path       string
-		expBody    string
-		middleware [](func(http.Handler) http.Handler)
+		path          string
+		middleware    [](func(http.Handler) http.Handler)
+		method        string
+		expBody       string
+		expStatusCode int
 	}{
 		"ok - no middleware": {
-			path:    "/a/test/luke",
-			expBody: "hello luke",
+			path:          "/a/test/luke",
+			method:        http.MethodGet,
+			expBody:       "hello luke",
+			expStatusCode: http.StatusOK,
 		},
 		"ok - with middleware": {
-			path:       "/a/test/luke",
-			middleware: [](func(http.Handler) http.Handler){testMiddleware1},
-			expBody:    "MW1:hello luke",
+			path:          "/a/test/luke",
+			middleware:    [](func(http.Handler) http.Handler){testMiddleware1},
+			method:        http.MethodGet,
+			expBody:       "MW1:hello luke",
+			expStatusCode: http.StatusOK,
 		},
 		"ok - with multiple middleware": {
-			path:       "/a/test/luke",
-			middleware: [](func(http.Handler) http.Handler){testMiddleware1, testMiddleware2},
-			expBody:    "MW2:MW1:hello luke",
+			path:          "/a/test/luke",
+			middleware:    [](func(http.Handler) http.Handler){testMiddleware1, testMiddleware2},
+			method:        http.MethodGet,
+			expBody:       "MW2:MW1:hello luke",
+			expStatusCode: http.StatusOK,
+		},
+		"post with id": {
+			path:          "/a/b/e/123",
+			method:        http.MethodPost,
+			expBody:       "POST id: 123",
+			expStatusCode: http.StatusOK,
+		},
+		"delete with id": {
+			path:          "/a/b/e/123",
+			method:        http.MethodDelete,
+			expBody:       "DELETE id: 123",
+			expStatusCode: http.StatusOK,
+		},
+		"notfound /": {
+			path:          "/",
+			method:        http.MethodGet,
+			expBody:       "not found",
+			expStatusCode: http.StatusNotFound,
+		},
+		"notfound /random/path": {
+			path:          "/random/path",
+			method:        http.MethodGet,
+			expBody:       "not found",
+			expStatusCode: http.StatusNotFound,
 		},
 	}
 	for tname, tc := range testCases {
@@ -42,11 +74,31 @@ func Test_Bootstrap(t *testing.T) {
 				}
 			}
 
+			b.Pattern(map[string]http.Handler{
+				"GET /": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusNotFound)
+					_, _ = w.Write([]byte("not found"))
+				}),
+			})
+
 			b.Prefix("/a")
 			b.Pattern(map[string]http.Handler{
 				"GET /test/{name}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					name := r.PathValue("name")
 					_, _ = w.Write([]byte("hello " + name))
+				}),
+			})
+
+			b1 := b.Subrouter()
+			b1.Prefix("/b")
+			b1.Pattern(map[string]http.Handler{
+				"POST /e/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					id := r.PathValue("id")
+					_, _ = w.Write([]byte("POST id: " + id))
+				}),
+				"DELETE /e/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					id := r.PathValue("id")
+					_, _ = w.Write([]byte("DELETE id: " + id))
 				}),
 			})
 
@@ -57,14 +109,19 @@ func Test_Bootstrap(t *testing.T) {
 			defer server.Close()
 
 			// perform some requests
-			resp, err := http.Get(server.URL + tc.path)
+			req, err := http.NewRequest(tc.method, server.URL+tc.path, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			client := &http.Client{}
+			resp, err := client.Do(req)
 			if err != nil {
 				t.Fatal(err)
 			}
 			defer resp.Body.Close()
 
-			if resp.StatusCode != http.StatusOK {
-				t.Errorf("\nexpected: %q\ngot: %q\n", http.StatusOK, resp.StatusCode)
+			if resp.StatusCode != tc.expStatusCode {
+				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expStatusCode, resp.StatusCode)
 			}
 
 			body, err := io.ReadAll(resp.Body)
@@ -74,7 +131,7 @@ func Test_Bootstrap(t *testing.T) {
 
 			got := string(body)
 			if got != tc.expBody {
-				t.Errorf("\nexpected: %q\ngot: %q\n", tc.expBody, got)
+				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expBody, got)
 			}
 		})
 	}
@@ -196,7 +253,7 @@ func Test_MuxWithSubrouters_MiddlewareChaining(t *testing.T) {
 			defer resp.Body.Close()
 
 			if resp.StatusCode != tc.expStatusCode {
-				t.Errorf("\nexpected: %d\ngot: %d\n", tc.expStatusCode, resp.StatusCode)
+				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expStatusCode, resp.StatusCode)
 			}
 
 			body, err := io.ReadAll(resp.Body)
@@ -206,7 +263,7 @@ func Test_MuxWithSubrouters_MiddlewareChaining(t *testing.T) {
 
 			got := string(body)
 			if got != tc.expBody {
-				t.Errorf("\nexpected: %q\ngot: %q\n", tc.expBody, got)
+				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expBody, got)
 			}
 		})
 	}
@@ -374,7 +431,7 @@ func Test_MuxWithSubrouters(t *testing.T) {
 			defer resp.Body.Close()
 
 			if resp.StatusCode != tc.expStatusCode {
-				t.Errorf("\nexpected: %d\ngot: %d\n", tc.expStatusCode, resp.StatusCode)
+				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expStatusCode, resp.StatusCode)
 			}
 
 			body, err := io.ReadAll(resp.Body)
@@ -384,7 +441,7 @@ func Test_MuxWithSubrouters(t *testing.T) {
 
 			got := string(body)
 			if got != tc.expBody {
-				t.Errorf("\nexpected: %q\ngot: %q\n", tc.expBody, got)
+				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expBody, got)
 			}
 		})
 	}

@@ -42,7 +42,7 @@ func Test_newHandler(t *testing.T) {
 			defer resp.Body.Close()
 
 			if resp.StatusCode != http.StatusOK {
-				t.Errorf("\nexpected: %d\ngot: %d\n", http.StatusOK, resp.StatusCode)
+				t.Errorf("\nexpected: %v\ngot: %v\n", http.StatusOK, resp.StatusCode)
 			}
 
 			body, err := io.ReadAll(resp.Body)
@@ -52,7 +52,7 @@ func Test_newHandler(t *testing.T) {
 
 			got := string(body)
 			if got != tc.expBody {
-				t.Errorf("\nexpected: %q\ngot: %q\n", tc.expBody, got)
+				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expBody, got)
 			}
 		})
 	}
@@ -77,7 +77,7 @@ func Test_removeDoubleSlash(t *testing.T) {
 			removedSlashes := removeDoubleSlash(tc.text)
 
 			if removedSlashes != tc.expRemovedSlashes {
-				t.Errorf("\nexpected: %s\ngot: %s\n", tc.expRemovedSlashes, removedSlashes)
+				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expRemovedSlashes, removedSlashes)
 			}
 		})
 	}
