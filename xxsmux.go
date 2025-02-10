@@ -8,9 +8,7 @@ package xxsmux
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"regexp"
 	"strings"
 )
 
@@ -59,18 +57,12 @@ func newHandler(mw ...Middleware) func(http.Handler) http.Handler {
 func (b *DefaultServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
 	patternPrefix := b.PatternPrefix
 	b.PatternPrefix = ""
-	b.PatternPrefix = b.Root.PatternPrefix + "/"
+	b.PatternPrefix = b.Root.PatternPrefix
 
 	for _, subBuilder := range b.Parent.SubDefaultServeMuxBuilder {
-		if b.Parent == b.Root {
-			if subBuilder == b {
-				for _, subSubBuilder := range subBuilder.SubDefaultServeMuxBuilder {
-					b.PatternPrefix = subSubBuilder.PatternPrefix + "/"
-				}
-			}
-		} else {
+		if b.Parent != b.Root {
 			for _, subSubBuilder := range subBuilder.SubDefaultServeMuxBuilder {
-				b.PatternPrefix = subSubBuilder.PatternPrefix + "/"
+				b.PatternPrefix = subSubBuilder.PatternPrefix
 			}
 		}
 	}
@@ -91,15 +83,9 @@ func (b *DefaultServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
 			patternPath = tmpPattern[0]
 		}
 
-		b.Patterns[method+removeDoubleSlash(b.PatternPrefix+patternPath)] = handler
+		b.Patterns[method+b.PatternPrefix+patternPath] = handler
 	}
 	b.SubDefaultServeMuxBuilder = append(b.SubDefaultServeMuxBuilder, b)
-}
-
-// removeDoubleSlash cleans up strings for double slashes `//`.
-func removeDoubleSlash(text string) string {
-	re := regexp.MustCompile(`//+`)
-	return re.ReplaceAllString(text, "/")
 }
 
 // Use wraps a middleware to an DefaultServeMuxBuilder.
