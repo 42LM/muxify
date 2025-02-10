@@ -92,7 +92,12 @@ func (b *DefaultServeMuxBuilder) Use(middleware ...Middleware) {
 
 // Prefix sets a prefix for the DefaultServeMuxBuilder.
 func (b *DefaultServeMuxBuilder) Prefix(prefix string) {
-	// TODO: validate prefix (check if first char is `/`)
+	if len(prefix) > 0 {
+		if prefix[0] != '/' {
+			prefix = "/" + prefix
+		}
+	}
+
 	b.PatternPrefix = prefix
 }
 

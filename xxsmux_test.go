@@ -470,3 +470,38 @@ func testMiddleware3(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+func Test_Prefix(t *testing.T) {
+	testCases := map[string]struct {
+		prefix string
+	}{
+		"ok - no slash prefix": {
+			prefix: "a",
+		},
+		"ok - slash prefix": {
+			prefix: "/a",
+		},
+		"ok - empty": {
+			prefix: "//a",
+		},
+	}
+	for tname, tc := range testCases {
+		t.Run(tname, func(t *testing.T) {
+			defaultServeMuxBuilder := xxsmux.DefaultServeMuxBuilder{}
+
+			defaultServeMuxBuilder.Prefix(tc.prefix)
+
+			got := defaultServeMuxBuilder.PatternPrefix
+
+			if len(tc.prefix) > 0 {
+				if tc.prefix[0] != '/' {
+					tc.prefix = "/" + tc.prefix
+				}
+			}
+
+			if got != tc.prefix {
+				t.Errorf("\nwant: %v\ngot: %v\n", tc.prefix, got)
+			}
+		})
+	}
+}
