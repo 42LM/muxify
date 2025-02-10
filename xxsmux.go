@@ -66,7 +66,8 @@ func (b *DefaultServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
 
 	b.PatternPrefix += patternPrefix
 
-	// TODO: test
+	// Using oldschool pattern without method specified like `/a/b/c`
+	// This will default to `GET /a/b/c`
 	for pattern, handler := range patterns {
 		tmpPattern := strings.Split(pattern, " ")
 
@@ -77,7 +78,7 @@ func (b *DefaultServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
 			method = tmpPattern[0] + " "
 			patternPath = tmpPattern[1]
 		default:
-			patternPath = tmpPattern[0]
+			patternPath = http.MethodGet + " " + tmpPattern[0]
 		}
 
 		b.Patterns[method+strings.ReplaceAll(b.PatternPrefix+patternPath, "//", "/")] = handler
