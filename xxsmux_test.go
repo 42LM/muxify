@@ -103,7 +103,7 @@ func Test_Bootstrap(t *testing.T) {
 			})
 
 			// build http default serve mux
-			mux := b.Build()
+			mux, _ := b.Build()
 
 			server := httptest.NewServer(mux)
 			defer server.Close()
@@ -121,7 +121,7 @@ func Test_Bootstrap(t *testing.T) {
 			defer resp.Body.Close()
 
 			if resp.StatusCode != tc.expStatusCode {
-				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expStatusCode, resp.StatusCode)
+				t.Errorf("\nwant: %v\ngot: %v\n", tc.expStatusCode, resp.StatusCode)
 			}
 
 			body, err := io.ReadAll(resp.Body)
@@ -131,7 +131,7 @@ func Test_Bootstrap(t *testing.T) {
 
 			got := string(body)
 			if got != tc.expBody {
-				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expBody, got)
+				t.Errorf("\nwant: %v\ngot: %v\n", tc.expBody, got)
 			}
 		})
 	}
@@ -234,7 +234,7 @@ func Test_MuxWithSubrouters_MiddlewareChaining(t *testing.T) {
 			})
 
 			// build http default serve mux
-			mux := b.Build()
+			mux, _ := b.Build()
 
 			server := httptest.NewServer(mux)
 			defer server.Close()
@@ -253,7 +253,7 @@ func Test_MuxWithSubrouters_MiddlewareChaining(t *testing.T) {
 			defer resp.Body.Close()
 
 			if resp.StatusCode != tc.expStatusCode {
-				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expStatusCode, resp.StatusCode)
+				t.Errorf("\nwant: %v\ngot: %v\n", tc.expStatusCode, resp.StatusCode)
 			}
 
 			body, err := io.ReadAll(resp.Body)
@@ -263,7 +263,7 @@ func Test_MuxWithSubrouters_MiddlewareChaining(t *testing.T) {
 
 			got := string(body)
 			if got != tc.expBody {
-				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expBody, got)
+				t.Errorf("\nwant: %v\ngot: %v\n", tc.expBody, got)
 			}
 		})
 	}
@@ -412,7 +412,7 @@ func Test_MuxWithSubrouters(t *testing.T) {
 			})
 
 			// build http default serve mux
-			mux := b.Build()
+			mux, _ := b.Build()
 
 			server := httptest.NewServer(mux)
 			defer server.Close()
@@ -431,7 +431,7 @@ func Test_MuxWithSubrouters(t *testing.T) {
 			defer resp.Body.Close()
 
 			if resp.StatusCode != tc.expStatusCode {
-				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expStatusCode, resp.StatusCode)
+				t.Errorf("\nwant: %v\ngot: %v\n", tc.expStatusCode, resp.StatusCode)
 			}
 
 			body, err := io.ReadAll(resp.Body)
@@ -441,7 +441,42 @@ func Test_MuxWithSubrouters(t *testing.T) {
 
 			got := string(body)
 			if got != tc.expBody {
-				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expBody, got)
+				t.Errorf("\nwant: %v\ngot: %v\n", tc.expBody, got)
+			}
+		})
+	}
+}
+
+func Test_Build(t *testing.T) {
+	testCases := map[string]struct {
+		expErr string
+	}{
+		"error": {
+			expErr: "build can only be called on the root xxsmux.DefaultServeMuxBuilder (error: not root)",
+		},
+	}
+	for tname, tc := range testCases {
+		t.Run(tname, func(t *testing.T) {
+			b := xxsmux.New()
+
+			b.Prefix("/a")
+			b.Pattern(map[string]http.Handler{
+				"GET /foo": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					_, _ = w.Write([]byte("foo"))
+				}),
+			})
+
+			b2 := b.Subrouter()
+			b2.Pattern(map[string]http.Handler{
+				"GET /bar": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					_, _ = w.Write([]byte("bar"))
+				}),
+			})
+
+			// build on subrouter and expect error
+			_, err := b2.Build()
+			if err.Error() != tc.expErr {
+				t.Errorf("\nwant: %v\ngot: %v\n", tc.expErr, err.Error())
 			}
 		})
 	}

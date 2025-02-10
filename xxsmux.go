@@ -7,10 +7,14 @@
 package xxsmux
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
 )
+
+var errNotRoot = errors.New("not root")
 
 // DefaultServeMuxBuilder is a simple builder for the http.DefaultServeMux.
 type DefaultServeMuxBuilder struct {
@@ -73,6 +77,7 @@ func (b *DefaultServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
 
 	b.PatternPrefix += patternPrefix
 
+	// TODO: test
 	for pattern, handler := range patterns {
 		tmpPattern := strings.Split(pattern, " ")
 
@@ -125,7 +130,12 @@ func (b *DefaultServeMuxBuilder) Subrouter() *DefaultServeMuxBuilder {
 
 // Build constructs an http.ServeMux with the patterns, handlers and middlewares
 // from the DefaultServeMuxBuilder.
-func (b *DefaultServeMuxBuilder) Build() *http.ServeMux {
+func (b *DefaultServeMuxBuilder) Build() (*http.ServeMux, error) {
+	// guard clause to prevent calling build from subrouters
+	if b.Root != b {
+		return nil, fmt.Errorf("build can only be called on the root xxsmux.DefaultServeMuxBuilder (error: %w)", errNotRoot)
+	}
+
 	defaultServeMux := http.ServeMux{}
 	queue := []*DefaultServeMuxBuilder{b}
 	visited := make(map[*DefaultServeMuxBuilder]bool)
@@ -148,5 +158,5 @@ func (b *DefaultServeMuxBuilder) Build() *http.ServeMux {
 		queue = append(queue, current.SubDefaultServeMuxBuilder...)
 	}
 
-	return &defaultServeMux
+	return &defaultServeMux, nil
 }
