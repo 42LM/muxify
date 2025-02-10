@@ -74,8 +74,19 @@ func (b *DefaultServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
 	b.PatternPrefix += patternPrefix
 
 	for pattern, handler := range patterns {
-		// TODO: strings.Split could fail and not have 2 elements
-		b.Patterns[removeDoubleSlash(b.PatternPrefix+strings.Split(pattern, " ")[1])] = handler
+		tmpPattern := strings.Split(pattern, " ")
+
+		var method string
+		var patternPath string
+		switch len(tmpPattern) {
+		case 2:
+			method = tmpPattern[0]
+			patternPath = tmpPattern[1]
+		default:
+			patternPath = tmpPattern[0]
+		}
+
+		b.Patterns[method+" "+removeDoubleSlash(b.PatternPrefix+patternPath)] = handler
 	}
 	b.SubDefaultServeMuxBuilder = append(b.SubDefaultServeMuxBuilder, b)
 }
