@@ -49,6 +49,12 @@ func Test_Bootstrap(t *testing.T) {
 			expBody:       "DELETE id: 123",
 			expStatusCode: http.StatusOK,
 		},
+		"get with id (test remove double slashes)": {
+			path:          "/a/b/e/d/f/123",
+			method:        http.MethodGet,
+			expBody:       "GET id: 123",
+			expStatusCode: http.StatusOK,
+		},
 		"notfound /": {
 			path:          "/",
 			method:        http.MethodGet,
@@ -108,6 +114,10 @@ func Test_Bootstrap(t *testing.T) {
 				"DELETE /e/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					id := r.PathValue("id")
 					_, _ = w.Write([]byte("DELETE id: " + id))
+				}),
+				"GET /e/////d///f//{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					id := r.PathValue("id")
+					_, _ = w.Write([]byte("GET id: " + id))
 				}),
 			})
 

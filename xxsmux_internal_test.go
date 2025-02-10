@@ -85,3 +85,27 @@ func testMiddleware3(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+func Test_removeDoubleSlash(t *testing.T) {
+	testCases := map[string]struct {
+		text              string
+		expRemovedSlashes string
+	}{
+		"many slashes": {
+			text:              "//a/////////b////c//",
+			expRemovedSlashes: "/a/b/c/",
+		},
+		"slashes in between": {
+			text:              "a///b///c",
+			expRemovedSlashes: "a/b/c",
+		},
+	}
+	for tname, tc := range testCases {
+		t.Run(tname, func(t *testing.T) {
+			removedSlashes := removeDoubleSlash(tc.text)
+			if removedSlashes != tc.expRemovedSlashes {
+				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expRemovedSlashes, removedSlashes)
+			}
+		})
+	}
+}

@@ -8,6 +8,7 @@ package xxsmux
 
 import (
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -81,9 +82,14 @@ func (b *DefaultServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
 			patternPath = http.MethodGet + " " + tmpPattern[0]
 		}
 
-		b.Patterns[method+strings.ReplaceAll(b.PatternPrefix+patternPath, "//", "/")] = handler
+		b.Patterns[method+removeDoubleSlash(b.PatternPrefix+patternPath)] = handler
 	}
 	b.SubDefaultServeMuxBuilder = append(b.SubDefaultServeMuxBuilder, b)
+}
+
+func removeDoubleSlash(text string) string {
+	re := regexp.MustCompile(`//+`)
+	return re.ReplaceAllString(text, "/")
 }
 
 // Use wraps a middleware to an DefaultServeMuxBuilder.
