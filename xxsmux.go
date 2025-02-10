@@ -80,7 +80,7 @@ func (b *DefaultServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
 			patternPath = tmpPattern[0]
 		}
 
-		b.Patterns[method+b.PatternPrefix+patternPath] = handler
+		b.Patterns[method+strings.ReplaceAll(b.PatternPrefix+patternPath, "//", "/")] = handler
 	}
 	b.SubDefaultServeMuxBuilder = append(b.SubDefaultServeMuxBuilder, b)
 }
