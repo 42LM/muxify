@@ -7,6 +7,7 @@
 package xxsmux
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -28,6 +29,11 @@ type DefaultServeMuxBuilder struct {
 
 	// SubDefaultServeMuxBuilder stores the subrouters of the main router.
 	SubDefaultServeMuxBuilder []*DefaultServeMuxBuilder
+
+	// executedBuild is used to track if the `Build()` function has been executed.
+	executedBuild bool
+	// registeredPatterns stores the patterns that have been registered to the default serve mux.
+	registeredPatterns []string
 }
 
 // Middleware represents an http.Handler wrapper to inject addional functionality.
@@ -123,6 +129,16 @@ func (b *DefaultServeMuxBuilder) Subrouter() *DefaultServeMuxBuilder {
 	return subBuilder
 }
 
+// PrintRegisteredPatterns prints the registered patterns of the http.ServeMux.
+// The Build() method needs to be called before!
+func (b *DefaultServeMuxBuilder) PrintRegisteredPatterns() {
+	if b.Root.executedBuild {
+		fmt.Println("* Registered patterns:", strings.Repeat("*", 47))
+		fmt.Println(strings.Join(b.Root.registeredPatterns, "\n"))
+		fmt.Printf("%s\n\n", strings.Repeat("*", 70))
+	}
+}
+
 // Build constructs an http.ServeMux with the patterns, handlers and middlewares
 // from the DefaultServeMuxBuilder.
 //
@@ -143,6 +159,7 @@ func (b *DefaultServeMuxBuilder) Build() *http.ServeMux {
 
 		if current.Patterns != nil {
 			for pattern, handler := range current.Patterns {
+				b.Root.registeredPatterns = append(b.Root.registeredPatterns, pattern)
 				defaultServeMux.Handle(pattern, newHandler(current.Middlewares...)(handler))
 			}
 		}
@@ -150,5 +167,6 @@ func (b *DefaultServeMuxBuilder) Build() *http.ServeMux {
 		queue = append(queue, current.SubDefaultServeMuxBuilder...)
 	}
 
+	b.Root.executedBuild = true
 	return &defaultServeMux
 }

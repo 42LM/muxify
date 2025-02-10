@@ -74,6 +74,24 @@ s := http.Server{
 s.ListenAndServe()
 ```
 
+> [!TIP]
+> Check out the registered patterns?
+> > ⚠️ Make sure the `Build()` function is called before printing.
+> ```go
+> router.PrintRegisteredPatterns()
+> ```
+>
+> Hm 🤔 `map[string]http.Handler` daaamn ew... 🤢  
+> Why don't define your own type?
+> ```go
+> type P map[string]http.Handler
+>
+> router.Pattern(P{
+>     "GET /a": handlerA,
+>     "GET /b": handlerB,
+> })
+> ```
+
 ## Motivation
 First of all this project exists for the sake of actually using the golang http default serve mux <3.
 
