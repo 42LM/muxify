@@ -14,9 +14,6 @@ Make the default `http.ServeMux` setup a breeze in Go 😌!
 
 > [!CAUTION]
 > 🚧 Work in progess 🚧
->
-> Only works for go version above `^1.22`.
-> > For more info: Go 1.22 introduced [enhanced routing patterns](https://tip.golang.org/doc/go1.22#enhanced_routing_patterns)
 
 ---
 
