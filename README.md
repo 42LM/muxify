@@ -38,7 +38,7 @@ It uses a common building block to create a router/subrouter for the serve mux b
 
 It all starts with creating the `muxify.ServeMuxBuilder`
 ```go
-muxb := muxify.New()
+muxb := muxify.NewServeMuxBuilder()
 ```
 
 Setup the router

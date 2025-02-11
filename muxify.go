@@ -39,8 +39,8 @@ type ServeMuxBuilder struct {
 // Middleware represents an http.Handler wrapper to inject addional functionality.
 type Middleware func(http.Handler) http.Handler
 
-// New returns a new ServeMuxBuilder.
-func New() *ServeMuxBuilder {
+// NewServeMuxBuilder returns a new ServeMuxBuilder.
+func NewServeMuxBuilder() *ServeMuxBuilder {
 	b := &ServeMuxBuilder{Patterns: map[string]http.Handler{}}
 	b.Root = b
 	b.Parent = b
@@ -116,7 +116,7 @@ func (b *ServeMuxBuilder) Prefix(prefix string) {
 
 // Subrouter returns an ServeMuxBuilder child.
 func (b *ServeMuxBuilder) Subrouter() *ServeMuxBuilder {
-	subBuilder := New()
+	subBuilder := NewServeMuxBuilder()
 	subBuilder.Parent = b
 	subBuilder.Root = b.Root
 
