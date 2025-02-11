@@ -25,14 +25,14 @@ func Test_Bootstrap_below_122(t *testing.T) {
 		},
 		"ok - with middleware": {
 			path:          "/a/test",
-			middleware:    [](func(http.Handler) http.Handler){testMiddleware1},
+			middleware:    [](func(http.Handler) http.Handler){testMw1},
 			method:        http.MethodGet,
 			expBody:       "MW1:hello",
 			expStatusCode: http.StatusOK,
 		},
 		"ok - with multiple middleware": {
 			path:          "/a/test",
-			middleware:    [](func(http.Handler) http.Handler){testMiddleware1, testMiddleware2},
+			middleware:    [](func(http.Handler) http.Handler){testMw1, testMw2},
 			method:        http.MethodGet,
 			expBody:       "MW2:MW1:hello",
 			expStatusCode: http.StatusOK,
@@ -141,4 +141,20 @@ func Test_Bootstrap_below_122(t *testing.T) {
 			}
 		})
 	}
+}
+
+func testMw1(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("MW1:"))
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func testMw2(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("MW2:"))
+
+		next.ServeHTTP(w, r)
+	})
 }
