@@ -1,4 +1,4 @@
-package xxsmux_test
+package muxify_test
 
 import (
 	"io"
@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/42LM/xxsmux"
+	"github.com/42LM/muxify"
 )
 
 func Test_Bootstrap(t *testing.T) {
@@ -76,7 +76,7 @@ func Test_Bootstrap(t *testing.T) {
 	for tname, tc := range testCases {
 		t.Run(tname, func(t *testing.T) {
 			// create the default service mux builder
-			b := xxsmux.New()
+			b := muxify.New()
 
 			// apply some middleware
 			if tc.middleware != nil {
@@ -214,7 +214,7 @@ func Test_MuxWithSubrouters_MiddlewareChaining(t *testing.T) {
 	}
 	for tname, tc := range testCases {
 		t.Run(tname, func(t *testing.T) {
-			b := xxsmux.New()
+			b := muxify.New()
 			if tc.middlewareB1 != nil {
 				for _, mw := range tc.middlewareB1 {
 					b.Use(mw)
@@ -384,7 +384,7 @@ func Test_MuxWithSubrouters(t *testing.T) {
 	}
 	for tname, tc := range testCases {
 		t.Run(tname, func(t *testing.T) {
-			b := xxsmux.New()
+			b := muxify.New()
 			if tc.middlewareB1 != nil {
 				for _, mw := range tc.middlewareB1 {
 					b.Use(mw)
@@ -506,11 +506,11 @@ func Test_Prefix(t *testing.T) {
 	}
 	for tname, tc := range testCases {
 		t.Run(tname, func(t *testing.T) {
-			defaultServeMuxBuilder := xxsmux.DefaultServeMuxBuilder{}
+			serveMuxBuilder := muxify.ServeMuxBuilder{}
 
-			defaultServeMuxBuilder.Prefix(tc.prefix)
+			serveMuxBuilder.Prefix(tc.prefix)
 
-			got := defaultServeMuxBuilder.PatternPrefix
+			got := serveMuxBuilder.PatternPrefix
 
 			if len(tc.prefix) > 0 {
 				if tc.prefix[0] != '/' {

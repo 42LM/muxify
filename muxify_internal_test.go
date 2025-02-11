@@ -1,4 +1,4 @@
-package xxsmux
+package muxify
 
 import (
 	"io"

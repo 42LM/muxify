@@ -1,10 +1,10 @@
-// Package xxsmux implements functionality for building http.DefaultServeMux.
+// Package muxify implements functionality for building a http.ServeMux.
 //
-// The xxsmux package is a default serve mux builder.
+// The muxify package is a default serve mux builder.
 // Build patterns, handlers and wrap middlewares conveniently upfront.
-// The xxsmux.DefaultServeMuxBuilder acts as a builder for the http.DefaultServeMux.
-// The overall goal of this package is to build the http.DefaultServeMux with pattern/path prefixes and middleware wired in.
-package xxsmux
+// The muxify.ServeMuxBuilder acts as a builder for the http.ServeMux.
+// The overall goal of this package is to build the http.ServeMux with pattern/path prefixes and middleware wired in.
+package muxify
 
 import (
 	"fmt"
@@ -13,24 +13,24 @@ import (
 	"strings"
 )
 
-// DefaultServeMuxBuilder is a simple builder for the http.DefaultServeMux.
-type DefaultServeMuxBuilder struct {
-	// Patterns represent the given patterns to `http.Handle`/`http.HandleFunc`.
+// ServeMuxBuilder is a simple builder for the http.ServeMux.
+type ServeMuxBuilder struct {
+	// Patterns represent the given patterns to http.Handle/http.HandleFunc.
 	Patterns map[string]http.Handler
 	// PatternPrefix represent the prefix of the pattern of a subrouter.
 	PatternPrefix string
 	// Middlewares represent the middlewares that wrap the subrouter.
 	Middlewares []Middleware
 	// Root always points to the root node of the default servce mux builder.
-	Root *DefaultServeMuxBuilder
+	Root *ServeMuxBuilder
 	// Parent always points to the parent node.
-	// For the `root` field the parent would also be `root`.
-	Parent *DefaultServeMuxBuilder
+	// For the root field the parent would also be root.
+	Parent *ServeMuxBuilder
 
 	// SubDefaultServeMuxBuilder stores the subrouters of the main router.
-	SubDefaultServeMuxBuilder []*DefaultServeMuxBuilder
+	SubDefaultServeMuxBuilder []*ServeMuxBuilder
 
-	// executedBuild is used to track if the `Build()` function has been executed.
+	// executedBuild is used to track if the Build() function has been executed.
 	executedBuild bool
 	// registeredPatterns stores the patterns that have been registered to the default serve mux.
 	registeredPatterns []string
@@ -39,9 +39,9 @@ type DefaultServeMuxBuilder struct {
 // Middleware represents an http.Handler wrapper to inject addional functionality.
 type Middleware func(http.Handler) http.Handler
 
-// New returns a new DefaultServeMuxBuilder.
-func New() *DefaultServeMuxBuilder {
-	b := &DefaultServeMuxBuilder{Patterns: map[string]http.Handler{}}
+// New returns a new ServeMuxBuilder.
+func New() *ServeMuxBuilder {
+	b := &ServeMuxBuilder{Patterns: map[string]http.Handler{}}
 	b.Root = b
 	b.Parent = b
 	return b
@@ -58,7 +58,7 @@ func newHandler(mw ...Middleware) func(http.Handler) http.Handler {
 }
 
 // Pattern registers hanglers for given patterns.
-func (b *DefaultServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
+func (b *ServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
 	patternPrefix := b.PatternPrefix
 	b.PatternPrefix = ""
 	b.PatternPrefix = b.Root.PatternPrefix
@@ -73,8 +73,8 @@ func (b *DefaultServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
 
 	b.PatternPrefix += patternPrefix
 
-	// Using oldschool pattern without method specified like `/a/b/c`
-	// This will default to `GET /a/b/c`
+	// Using oldschool pattern without method specified like "/a/b/c"
+	// This will default to "GET /a/b/c"
 	for pattern, handler := range patterns {
 		tmpPattern := strings.Split(pattern, " ")
 
@@ -98,13 +98,13 @@ func removeDoubleSlash(text string) string {
 	return re.ReplaceAllString(text, "/")
 }
 
-// Use wraps a middleware to an DefaultServeMuxBuilder.
-func (b *DefaultServeMuxBuilder) Use(middleware ...Middleware) {
+// Use wraps a middleware to an ServeMuxBuilder.
+func (b *ServeMuxBuilder) Use(middleware ...Middleware) {
 	b.Middlewares = append(b.Middlewares, middleware...)
 }
 
-// Prefix sets a prefix for the DefaultServeMuxBuilder.
-func (b *DefaultServeMuxBuilder) Prefix(prefix string) {
+// Prefix sets a prefix for the ServeMuxBuilder.
+func (b *ServeMuxBuilder) Prefix(prefix string) {
 	if len(prefix) > 0 {
 		if prefix[0] != '/' {
 			prefix = "/" + prefix
@@ -114,8 +114,8 @@ func (b *DefaultServeMuxBuilder) Prefix(prefix string) {
 	b.PatternPrefix = prefix
 }
 
-// Subrouter returns an DefaultServeMuxBuilder child.
-func (b *DefaultServeMuxBuilder) Subrouter() *DefaultServeMuxBuilder {
+// Subrouter returns an ServeMuxBuilder child.
+func (b *ServeMuxBuilder) Subrouter() *ServeMuxBuilder {
 	subBuilder := New()
 	subBuilder.Parent = b
 	subBuilder.Root = b.Root
@@ -131,7 +131,7 @@ func (b *DefaultServeMuxBuilder) Subrouter() *DefaultServeMuxBuilder {
 
 // PrintRegisteredPatterns prints the registered patterns of the http.ServeMux.
 // The Build() method needs to be called before!
-func (b *DefaultServeMuxBuilder) PrintRegisteredPatterns() {
+func (b *ServeMuxBuilder) PrintRegisteredPatterns() {
 	if b.Root.executedBuild {
 		fmt.Println("* Registered patterns:", strings.Repeat("*", 47))
 		fmt.Println(strings.Join(b.Root.registeredPatterns, "\n"))
@@ -140,13 +140,13 @@ func (b *DefaultServeMuxBuilder) PrintRegisteredPatterns() {
 }
 
 // Build constructs an http.ServeMux with the patterns, handlers and middlewares
-// from the DefaultServeMuxBuilder.
+// from the ServeMuxBuilder.
 //
-// Always builds from root DefaultServeMuxBuilder node.
-func (b *DefaultServeMuxBuilder) Build() *http.ServeMux {
+// Always builds from root ServeMuxBuilder node.
+func (b *ServeMuxBuilder) Build() *http.ServeMux {
 	defaultServeMux := http.ServeMux{}
-	queue := []*DefaultServeMuxBuilder{b.Root}
-	visited := make(map[*DefaultServeMuxBuilder]bool)
+	queue := []*ServeMuxBuilder{b.Root}
+	visited := make(map[*ServeMuxBuilder]bool)
 
 	for len(queue) > 0 {
 		current := queue[0]
