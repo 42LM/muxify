@@ -1,3 +1,3 @@
-module github.com/42LM/xxsmux
+module github.com/42LM/muxify
 
 go 1.23.5

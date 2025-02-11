@@ -1,15 +1,15 @@
-# xxsmux
-![example3](https://github.com/42LM/xxsmux/actions/workflows/test.yaml/badge.svg)
-[![codecov](https://codecov.io/gh/42LM/xxsmux/graph/badge.svg?token=6CIY6SU7MJ)](https://codecov.io/gh/42LM/xxsmux)
-[![](https://godoc.org/github.com/42LM/xxsmux?status.svg)](http://godoc.org/github.com/42LM/xxsmux)
+# muxify
+![example3](https://github.com/42LM/muxify/actions/workflows/test.yaml/badge.svg)
+[![codecov](https://codecov.io/gh/42LM/muxify/graph/badge.svg?token=6CIY6SU7MJ)](https://codecov.io/gh/42LM/muxify)
+[![](https://godoc.org/github.com/42LM/muxify?status.svg)](http://godoc.org/github.com/42LM/muxify)
 
-<img width="150" alt="XXSMuX2" src="https://github.com/user-attachments/assets/5b1d6123-55c9-4e3f-81ee-51ffbea3f9d5" />
+<img width="150" alt="muxify" src="https://github.com/user-attachments/assets/5b1d6123-55c9-4e3f-81ee-51ffbea3f9d5" />
 <br>
 <br>
 
-The _**xxsmux**_ package offers a convenient way to build a default [`http.ServeMux`](https://pkg.go.dev/net/http#ServeMux). Build patterns, connect handlers, wrap path prefixes and middlewares upfront. Create subrouters from routers that inherit the middleware and path prefix setup from the parent router.
+🪄 _**muxify**_ your mux setup in Go! Tiny package for easily building and enhancing the [`http.ServeMux`](https://pkg.go.dev/net/http#ServeMux) with middlewares, subrouters and prefixes.
 
-The purpose of this package is to build a golang default serve mux and is not a standalone multiplexer. It rather helps to create the default serve mux without too much repition in code.
+Make the default `http.ServeMux` setup a breeze in Go 😌!
 
 > [!CAUTION]
 > 🚧 Work in progess 🚧
@@ -23,52 +23,52 @@ The purpose of this package is to build a golang default serve mux and is not a 
 * [Example](#example)
 * [Motivation](#motivation)
 
-> More examples can be found in the [wiki](https://github.com/42LM/xxsmux/wiki/Examples)
+> More examples can be found in the [wiki](https://github.com/42LM/muxify/wiki/Examples)
 
 ---
 
 ## Install
 ```sh
-go get github.com/42LM/xxsmux
+go get github.com/42LM/muxify
 ```
 
 ## Example
-_**xxsmux**_ slightly adopts the syntax of [gorilla/mux](https://github.com/gorilla/mux).
-It uses a common building block to create a router/subrouter.
+_**muxify**_ slightly adopts the syntax of [gorilla/mux](https://github.com/gorilla/mux).
+It uses a common building block to create a router/subrouter for the serve mux builder.
 
-It all starts with creating the `xxsmux.DefaultServeMuxBuilder`
+It all starts with creating the `muxify.ServeMuxBuilder`
 ```go
-router := xxsmux.New()
+muxb := muxify.NewServeMuxBuilder()
 ```
 
 Setup the router
 ```go
-router.Pattern(map[string]http.Handler{
+muxb.Pattern(map[string]http.Handler{
     "GET /": notFoundHandler,
 })
 ```
 
 Create a subrouter from the root router (prefix and middleware are optional)
 ```go
-subRouter := router.Subrouter()
-subRouter.Use(AdminMiddleware, ChorsMiddleware)
-subRouter.Prefix("admin")
-subRouter.Pattern(map[string]http.Handler{
+subMuxb := muxb.Subrouter()
+subMuxb.Use(AdminMiddleware, ChorsMiddleware)
+subMuxb.Prefix("admin")
+subMuxb.Pattern(map[string]http.Handler{
     "POST /{id}": createAdminHandler,
     "DELETE /{id}": deleteAdminHandler,
 })
 ```
 
-Build the default http serve mux (always uses root `DefaultServeMuxBuilder` node)
+Build the default http serve mux (always uses root `ServeMuxBuilder` node)
 ```go
-defaultServeMux := router.Build(defaultServeMux)
+mux := mux.Build()
 ```
 
 Use it as usual
 ```go
 s := http.Server{
     Addr:    ":8080",
-    Handler: defaultServeMux,
+    Handler: mux,
 }
 
 s.ListenAndServe()
@@ -78,7 +78,7 @@ s.ListenAndServe()
 > Check out the registered patterns?
 > > ⚠️ Make sure the `Build()` function is called before printing.
 > ```go
-> router.PrintRegisteredPatterns()
+> muxb.PrintRegisteredPatterns()
 > ```
 >
 > Hm 🤔 `map[string]http.Handler` daaamn ew... 🤢  
@@ -86,7 +86,7 @@ s.ListenAndServe()
 > ```go
 > type P map[string]http.Handler
 >
-> router.Pattern(P{
+> muxb.Pattern(P{
 >     "GET /a": handlerA,
 >     "GET /b": handlerB,
 > })
@@ -95,7 +95,7 @@ s.ListenAndServe()
 ## Motivation
 First of all this project exists for the sake of actually using the golang http default serve mux <3.
 
-The motivation for this project derives from the following two problems with the enhanced routing patterns for the `http.DefaultServeMux`:
+The motivation for this project derives from the following two problems with the enhanced routing patterns for the `http.ServeMux`:
 
 ### 1. Every single handler needs to be wrapped with middleware. This leads to alot of repeating code and moreover to very unreadable code, too. IMHO it already starts to get out of hands when one handler needs to be wrapped with more than four middlewares.
 
@@ -105,7 +105,7 @@ The motivation for this project derives from the following two problems with the
 > ```
 > So even for middlewares that maybe every handler should have (e.g. auth) this is pretty cumbersome to wrap every single handler in it.
 >
-> 💡 _**xxsmux**_ provides a convenient way of wrapping patterns/routes with middleware and subrouters take over these middlewares.
+> 💡 _**muxify**_ provides a convenient way of wrapping patterns/routes with middleware and subrouters take over these middlewares.
 
 ### 2. No subrouter functionality.
 
@@ -119,4 +119,4 @@ The motivation for this project derives from the following two problems with the
 > Not being able to use a subrouter adds up to the other problem.
 > A subrouter would help wrapping certain patterns/routes with middleware. A subrouter being created from another router/subrouter always inherits the middlewares.
 >
-> 💡 _**xxsmux**_ enables the possibility of defining subrouters.
+> 💡 _**muxify**_ enables the possibility of defining subrouters.
