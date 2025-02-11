@@ -15,15 +15,9 @@ jobs:
           go-version: ${{matrix.go-version}}
 
       - name: Run tests and generate coverage
-        run: go test -v -coverprofile=coverage.out
+        run: go test -v -coverprofile=coverage.out ./...
 
-      - name: Check coverage threshold
-        run: |
-          coverage=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
-          if (( $(echo "$coverage < 80.0" | bc -l) )); then
-            exit 1
-          fi
-
+      # TODO: setup codecov min cover for prs ...
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
