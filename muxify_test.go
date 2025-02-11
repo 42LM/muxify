@@ -1,3 +1,6 @@
+//go:build go1.22
+// +build go1.22
+
 package muxify_test
 
 import (
@@ -67,11 +70,6 @@ func Test_Bootstrap(t *testing.T) {
 			expBody:       "not found",
 			expStatusCode: http.StatusNotFound,
 		},
-		"no method set (default to GET)": {
-			path:          "/oldschool",
-			expBody:       "oldschool",
-			expStatusCode: http.StatusOK,
-		},
 	}
 	for tname, tc := range testCases {
 		t.Run(tname, func(t *testing.T) {
@@ -89,10 +87,6 @@ func Test_Bootstrap(t *testing.T) {
 				"GET /": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusNotFound)
 					_, _ = w.Write([]byte("not found"))
-				}),
-				"/oldschool": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.WriteHeader(http.StatusOK)
-					_, _ = w.Write([]byte("oldschool"))
 				}),
 			})
 

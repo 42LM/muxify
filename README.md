@@ -1,5 +1,6 @@
 # muxify
-![example3](https://github.com/42LM/muxify/actions/workflows/test.yaml/badge.svg)
+[![test: windows](https://github.com/42LM/muxify/actions/workflows/test-windows.yaml/badge.svg)](https://github.com/42LM/muxify/actions/workflows/test-windows.yaml)
+[![test: ubuntu/macos](https://github.com/42LM/muxify/actions/workflows/test-ubuntu-macos.yaml/badge.svg)](https://github.com/42LM/muxify/actions/workflows/test-ubuntu-macos.yaml)
 [![codecov](https://codecov.io/gh/42LM/muxify/graph/badge.svg?token=6CIY6SU7MJ)](https://codecov.io/gh/42LM/muxify)
 [![](https://godoc.org/github.com/42LM/muxify?status.svg)](http://godoc.org/github.com/42LM/muxify)
 
@@ -13,9 +14,6 @@ Make the default `http.ServeMux` setup a breeze in Go 😌!
 
 > [!CAUTION]
 > 🚧 Work in progess 🚧
->
-> Only works for go version above `^1.22`.
-> > For more info: Go 1.22 introduced [enhanced routing patterns](https://tip.golang.org/doc/go1.22#enhanced_routing_patterns)
 
 ---
 
