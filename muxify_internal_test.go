@@ -109,3 +109,38 @@ func Test_removeDoubleSlash(t *testing.T) {
 		})
 	}
 }
+
+func Test_Prefix(t *testing.T) {
+	testCases := map[string]struct {
+		prefix string
+	}{
+		"ok - no slash prefix": {
+			prefix: "a",
+		},
+		"ok - slash prefix": {
+			prefix: "/a",
+		},
+		"ok - empty": {
+			prefix: "//a",
+		},
+	}
+	for tname, tc := range testCases {
+		t.Run(tname, func(t *testing.T) {
+			mux := Mux{}
+
+			mux.Prefix(tc.prefix)
+
+			got := mux.patternPrefix
+
+			if len(tc.prefix) > 0 {
+				if tc.prefix[0] != '/' {
+					tc.prefix = "/" + tc.prefix
+				}
+			}
+
+			if got != tc.prefix {
+				t.Errorf("\nwant: %v\ngot: %v\n", tc.prefix, got)
+			}
+		})
+	}
+}
