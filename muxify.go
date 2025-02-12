@@ -118,10 +118,11 @@ func (b *ServeMuxBuilder) Subrouter() *ServeMuxBuilder {
 	subBuilder.Parent = b
 	subBuilder.Root = b.Root
 
-	if b.Root.Middlewares != nil && subBuilder != b.Root {
+	if subBuilder.Parent != b.Root {
+		subBuilder.Middlewares = append(subBuilder.Middlewares, subBuilder.Parent.Middlewares...)
+	} else {
 		subBuilder.Middlewares = append(subBuilder.Middlewares, b.Root.Middlewares...)
 	}
-
 	b.SubDefaultServeMuxBuilder = append(b.SubDefaultServeMuxBuilder, subBuilder)
 
 	return subBuilder
