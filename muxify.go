@@ -27,8 +27,8 @@ type ServeMuxBuilder struct {
 	// For the root field the parent would also be root.
 	Parent *ServeMuxBuilder
 
-	// SubDefaultServeMuxBuilder stores the subrouters of the main router.
-	SubDefaultServeMuxBuilder []*ServeMuxBuilder
+	// SubServeMuxBuilder stores the subrouters of the main router.
+	SubServeMuxBuilder []*ServeMuxBuilder
 
 	// executedBuild is used to track if the Build() function has been executed.
 	executedBuild bool
@@ -63,9 +63,9 @@ func (b *ServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
 	b.PatternPrefix = ""
 	b.PatternPrefix = b.Root.PatternPrefix
 
-	for _, subBuilder := range b.Parent.SubDefaultServeMuxBuilder {
+	for _, subBuilder := range b.Parent.SubServeMuxBuilder {
 		if b.Parent != b.Root {
-			for _, subSubBuilder := range subBuilder.SubDefaultServeMuxBuilder {
+			for _, subSubBuilder := range subBuilder.SubServeMuxBuilder {
 				b.PatternPrefix = subSubBuilder.PatternPrefix
 			}
 		}
@@ -88,7 +88,7 @@ func (b *ServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
 
 		b.Patterns[method+removeDoubleSlash(b.PatternPrefix+patternPath)] = handler
 	}
-	b.SubDefaultServeMuxBuilder = append(b.SubDefaultServeMuxBuilder, b)
+	b.SubServeMuxBuilder = append(b.SubServeMuxBuilder, b)
 }
 
 func removeDoubleSlash(text string) string {
@@ -123,7 +123,8 @@ func (b *ServeMuxBuilder) Subrouter() *ServeMuxBuilder {
 	} else {
 		subBuilder.Middlewares = append(subBuilder.Middlewares, b.Root.Middlewares...)
 	}
-	b.SubDefaultServeMuxBuilder = append(b.SubDefaultServeMuxBuilder, subBuilder)
+
+	b.SubServeMuxBuilder = append(b.SubServeMuxBuilder, subBuilder)
 
 	return subBuilder
 }
@@ -163,7 +164,7 @@ func (b *ServeMuxBuilder) Build() *http.ServeMux {
 			}
 		}
 
-		queue = append(queue, current.SubDefaultServeMuxBuilder...)
+		queue = append(queue, current.SubServeMuxBuilder...)
 	}
 
 	b.Root.executedBuild = true
