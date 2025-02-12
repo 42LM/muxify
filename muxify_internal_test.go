@@ -18,7 +18,7 @@ func Test_newHandler(t *testing.T) {
 		},
 		"wrap multiple middlewares": {
 			middleware: []Middleware{testMiddleware1, testMiddleware2},
-			expBody:    "MW2:MW1:test response",
+			expBody:    "MW1:MW2:test response",
 		},
 		"wrap middleware": {
 			middleware: []Middleware{testMiddleware3},

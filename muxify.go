@@ -50,8 +50,8 @@ func NewServeMuxBuilder() *ServeMuxBuilder {
 // newHandler returns an http.Handler wrapped with given middlewares.
 func newHandler(mw ...Middleware) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
-		for _, m := range mw {
-			h = m(h)
+		for i := len(mw) - 1; i >= 0; i-- {
+			h = mw[i](h)
 		}
 		return h
 	}

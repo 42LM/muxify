@@ -37,7 +37,7 @@ func Test_Bootstrap(t *testing.T) {
 			path:          "/a/test/luke",
 			middleware:    [](func(http.Handler) http.Handler){testMiddleware1, testMiddleware2},
 			method:        http.MethodGet,
-			expBody:       "MW2:MW1:hello luke",
+			expBody:       "MW1:MW2:hello luke",
 			expStatusCode: http.StatusOK,
 		},
 		"post with id": {
@@ -192,7 +192,7 @@ func Test_MuxWithSubrouters_MiddlewareChaining(t *testing.T) {
 			method:        http.MethodGet,
 			middlewareB1:  [](func(http.Handler) http.Handler){testMiddleware1},
 			middlewareB2:  [](func(http.Handler) http.Handler){testMiddleware2},
-			expBody:       "MW2:MW1:bar",
+			expBody:       "MW1:MW2:bar",
 			expStatusCode: http.StatusOK,
 		},
 		"ok - no content": {
@@ -348,7 +348,7 @@ func Test_MuxWithSubrouters(t *testing.T) {
 			path:          "/a/b/d/woo",
 			method:        http.MethodGet,
 			middlewareB1:  [](func(http.Handler) http.Handler){testMiddleware1, testMiddleware2},
-			expBody:       "MW2:MW1:woo",
+			expBody:       "MW1:MW2:woo",
 			expStatusCode: http.StatusOK,
 		},
 		"ok - middlewareB2 - /a/b/bar": {
@@ -356,7 +356,7 @@ func Test_MuxWithSubrouters(t *testing.T) {
 			method:        http.MethodGet,
 			middlewareB1:  [](func(http.Handler) http.Handler){testMiddleware1},
 			middlewareB2:  [](func(http.Handler) http.Handler){testMiddleware2, testMiddleware3},
-			expBody:       "MW3:MW2:MW1:bar",
+			expBody:       "MW1:MW2:MW3:bar",
 			expStatusCode: http.StatusOK,
 		},
 		"ok - middlewareB2 - /a/foobar": {

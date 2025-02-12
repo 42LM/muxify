@@ -34,7 +34,7 @@ func Test_Bootstrap_below_122(t *testing.T) {
 			path:          "/a/test",
 			middleware:    [](func(http.Handler) http.Handler){testMw1, testMw2},
 			method:        http.MethodGet,
-			expBody:       "MW2:MW1:hello",
+			expBody:       "MW1:MW2:hello",
 			expStatusCode: http.StatusOK,
 		},
 		"post with id": {
