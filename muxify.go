@@ -27,8 +27,8 @@ type ServeMuxBuilder struct {
 	// For the root field the parent would also be root.
 	Parent *ServeMuxBuilder
 
-	// SubDefaultServeMuxBuilder stores the subrouters of the main router.
-	SubDefaultServeMuxBuilder []*ServeMuxBuilder
+	// SubServeMuxBuilder stores the subrouters of the main router.
+	SubServeMuxBuilder []*ServeMuxBuilder
 
 	// executedBuild is used to track if the Build() function has been executed.
 	executedBuild bool
@@ -50,8 +50,8 @@ func NewServeMuxBuilder() *ServeMuxBuilder {
 // newHandler returns an http.Handler wrapped with given middlewares.
 func newHandler(mw ...Middleware) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
-		for _, m := range mw {
-			h = m(h)
+		for i := len(mw) - 1; i >= 0; i-- {
+			h = mw[i](h)
 		}
 		return h
 	}
@@ -63,9 +63,9 @@ func (b *ServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
 	b.PatternPrefix = ""
 	b.PatternPrefix = b.Root.PatternPrefix
 
-	for _, subBuilder := range b.Parent.SubDefaultServeMuxBuilder {
+	for _, subBuilder := range b.Parent.SubServeMuxBuilder {
 		if b.Parent != b.Root {
-			for _, subSubBuilder := range subBuilder.SubDefaultServeMuxBuilder {
+			for _, subSubBuilder := range subBuilder.SubServeMuxBuilder {
 				b.PatternPrefix = subSubBuilder.PatternPrefix
 			}
 		}
@@ -88,7 +88,7 @@ func (b *ServeMuxBuilder) Pattern(patterns map[string]http.Handler) {
 
 		b.Patterns[method+removeDoubleSlash(b.PatternPrefix+patternPath)] = handler
 	}
-	b.SubDefaultServeMuxBuilder = append(b.SubDefaultServeMuxBuilder, b)
+	b.SubServeMuxBuilder = append(b.SubServeMuxBuilder, b)
 }
 
 func removeDoubleSlash(text string) string {
@@ -118,11 +118,13 @@ func (b *ServeMuxBuilder) Subrouter() *ServeMuxBuilder {
 	subBuilder.Parent = b
 	subBuilder.Root = b.Root
 
-	if b.Root.Middlewares != nil && subBuilder != b.Root {
+	if subBuilder.Parent != b.Root {
+		subBuilder.Middlewares = append(subBuilder.Middlewares, subBuilder.Parent.Middlewares...)
+	} else {
 		subBuilder.Middlewares = append(subBuilder.Middlewares, b.Root.Middlewares...)
 	}
 
-	b.SubDefaultServeMuxBuilder = append(b.SubDefaultServeMuxBuilder, subBuilder)
+	b.SubServeMuxBuilder = append(b.SubServeMuxBuilder, subBuilder)
 
 	return subBuilder
 }
@@ -162,7 +164,7 @@ func (b *ServeMuxBuilder) Build() *http.ServeMux {
 			}
 		}
 
-		queue = append(queue, current.SubDefaultServeMuxBuilder...)
+		queue = append(queue, current.SubServeMuxBuilder...)
 	}
 
 	b.Root.executedBuild = true
