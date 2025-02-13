@@ -21,7 +21,7 @@ type Mux struct {
 	registeredPatterns *[]string
 }
 
-// Middleware represents an http.Handler wrapper to inject addional functionality.
+// Middleware represents an http.Handler wrapper to inject additional functionality.
 type Middleware func(http.Handler) http.Handler
 
 // NewMux returns a new muxify.Mux.
