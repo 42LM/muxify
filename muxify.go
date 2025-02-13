@@ -87,10 +87,12 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // Subrouter returns a sub mux.
 func (mux *Mux) Subrouter() *Mux {
-	subMux := &Mux{muxify: mux.muxify, patternPrefix: mux.patternPrefix}
-	subMux.middlewares = append(subMux.middlewares, mux.middlewares...)
-	subMux.registeredPatterns = mux.registeredPatterns
-	return subMux
+	return &Mux{
+		muxify:             mux.muxify,
+		patternPrefix:      mux.patternPrefix,
+		middlewares:        mux.middlewares,
+		registeredPatterns: mux.registeredPatterns,
+	}
 }
 
 // Use wraps a middleware to the mux.
