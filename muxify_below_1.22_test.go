@@ -79,28 +79,28 @@ func Test_Bootstrap_below_122(t *testing.T) {
 				}
 			}
 
-			mux.HandleFunc("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNotFound)
 				_, _ = w.Write([]byte("not found"))
-			}))
-			mux.HandleFunc("/oldschool", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			})
+			mux.Handle("/oldschool", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 				_, _ = w.Write([]byte("oldschool"))
 			}))
 
 			mux.Prefix("/a")
-			mux.HandleFunc("/test", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write([]byte("hello"))
-			}))
+			})
 
 			subMux := mux.Subrouter()
 			subMux.Prefix("/b")
-			subMux.HandleFunc("/e", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			subMux.HandleFunc("/e", func(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write([]byte("POST"))
-			}))
-			subMux.HandleFunc("/e/////d///f//", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			})
+			subMux.HandleFunc("/e/////d///f//", func(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write([]byte("DELETE"))
-			}))
+			})
 
 			server := httptest.NewServer(mux)
 			defer server.Close()

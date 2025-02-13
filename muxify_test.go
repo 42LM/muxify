@@ -1,6 +1,7 @@
 //go:build go1.22
 // +build go1.22
 
+// TODO: refactor tests
 package muxify_test
 
 import (
@@ -83,30 +84,28 @@ func Test_Bootstrap(t *testing.T) {
 				}
 			}
 
-			mux.HandleFunc("GET /", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNotFound)
 				_, _ = w.Write([]byte("not found"))
-			}),
-			)
+			})
 
 			mux.Prefix("/a")
-			mux.HandleFunc("GET /test/{name}", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mux.HandleFunc("GET /test/{name}", func(w http.ResponseWriter, r *http.Request) {
 				name := r.PathValue("name")
 				_, _ = w.Write([]byte("hello " + name))
-			}),
-			)
+			})
 
 			subMux1 := mux.Subrouter()
 			subMux1.Prefix("/b")
-			subMux1.HandleFunc("POST /e/{id}", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			subMux1.HandleFunc("POST /e/{id}", func(w http.ResponseWriter, r *http.Request) {
 				id := r.PathValue("id")
 				_, _ = w.Write([]byte("POST id: " + id))
-			}))
-			subMux1.HandleFunc("DELETE /e/{id}", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			})
+			subMux1.HandleFunc("DELETE /e/{id}", func(w http.ResponseWriter, r *http.Request) {
 				id := r.PathValue("id")
 				_, _ = w.Write([]byte("DELETE id: " + id))
-			}))
-			subMux1.HandleFunc("GET /e/////d///f//{id}", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			})
+			subMux1.Handle("GET /e/////d///f//{id}", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				id := r.PathValue("id")
 				_, _ = w.Write([]byte("GET id: " + id))
 			}))
@@ -229,18 +228,18 @@ func Test_MuxWithSubrouters_MiddlewareChaining(t *testing.T) {
 				}
 			}
 
-			mux.HandleFunc("GET /", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNoContent)
 				_, _ = w.Write([]byte("foo" + r.URL.Path))
-			}))
-			mux.HandleFunc("OPTIONS /", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			})
+			mux.HandleFunc("OPTIONS /", func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusNoContent)
 				_, _ = w.Write([]byte("foo"))
-			}))
+			})
 			mux.Prefix("/a")
-			mux.HandleFunc("GET /foo", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mux.HandleFunc("GET /foo", func(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write([]byte("foo"))
-			}))
+			})
 
 			subMux1 := mux.Subrouter()
 			if tc.middlewareB2 != nil {
@@ -249,9 +248,9 @@ func Test_MuxWithSubrouters_MiddlewareChaining(t *testing.T) {
 				}
 			}
 
-			subMux1.Prefix("/b").HandleFunc("GET /bar", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			subMux1.Prefix("/b").HandleFunc("GET /bar", func(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write([]byte("bar"))
-			}))
+			})
 
 			subMux2 := subMux1.Subrouter()
 			if tc.middlewareB3 != nil {
@@ -260,9 +259,9 @@ func Test_MuxWithSubrouters_MiddlewareChaining(t *testing.T) {
 				}
 			}
 			subMux2.Prefix("/c")
-			subMux2.HandleFunc("GET /foobar", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			subMux2.HandleFunc("GET /foobar", func(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write([]byte("foobar"))
-			}))
+			})
 
 			subMux3 := subMux2.Subrouter()
 			if tc.middlewareB4 != nil {
@@ -271,9 +270,9 @@ func Test_MuxWithSubrouters_MiddlewareChaining(t *testing.T) {
 				}
 			}
 			subMux3.Prefix("/d")
-			subMux3.HandleFunc("GET /barfoot", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			subMux3.HandleFunc("GET /barfoot", func(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write([]byte("barfoot"))
-			}))
+			})
 
 			server := httptest.NewServer(mux)
 			defer server.Close()
@@ -411,9 +410,9 @@ func Test_MuxWithSubrouters(t *testing.T) {
 				}
 			}
 			mux.Prefix("/a")
-			mux.HandleFunc("GET /foo", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mux.HandleFunc("GET /foo", func(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write([]byte("foo"))
-			}))
+			})
 
 			subMux1 := mux.Subrouter()
 			if tc.middlewareB2 != nil {
@@ -422,14 +421,14 @@ func Test_MuxWithSubrouters(t *testing.T) {
 				}
 			}
 			subMux1.Prefix("/b")
-			subMux1.HandleFunc("GET /bar", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			subMux1.HandleFunc("GET /bar", func(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write([]byte("bar"))
-			}))
+			})
 
 			subMux2 := mux.Subrouter()
-			subMux2.HandleFunc("GET /foobar", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			subMux2.HandleFunc("GET /foobar", func(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write([]byte("foobar"))
-			}))
+			})
 
 			subMux3 := subMux1.Subrouter()
 			if tc.middlewareB4 != nil {
@@ -438,9 +437,9 @@ func Test_MuxWithSubrouters(t *testing.T) {
 				}
 			}
 			subMux3.Prefix("/d")
-			subMux3.HandleFunc("GET /woo", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			subMux3.HandleFunc("GET /woo", func(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write([]byte("woo"))
-			}))
+			})
 
 			server := httptest.NewServer(mux)
 			defer server.Close()
@@ -475,7 +474,6 @@ func Test_MuxWithSubrouters(t *testing.T) {
 	}
 }
 
-// TODO: create inside loop
 func testMiddleware1(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("MW1:"))
