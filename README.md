@@ -36,58 +36,38 @@ It uses a common building block to create a router/subrouter for the serve mux b
 
 It all starts with creating the `muxify.ServeMuxBuilder`
 ```go
-muxb := muxify.NewServeMuxBuilder()
+mux := muxify.NewMux()
 ```
 
 Setup the router
 ```go
-muxb.Pattern(map[string]http.Handler{
-    "GET /": notFoundHandler,
-})
+mux.Handle("GET /", notFoundHandler)
 ```
 
 Create a subrouter from the root router (prefix and middleware are optional)
 ```go
-subMuxb := muxb.Subrouter()
-subMuxb.Use(AdminMiddleware, ChorsMiddleware)
-subMuxb.Prefix("admin")
-subMuxb.Pattern(map[string]http.Handler{
-    "POST /{id}": createAdminHandler,
-    "DELETE /{id}": deleteAdminHandler,
-})
-```
-
-Build the default http serve mux (always uses root `ServeMuxBuilder` node)
-```go
-mux := mux.Build()
+subMux := mux.Subrouter()
+subMux.Use(AdminMiddleware, ChorsMiddleware)
+subMux.Prefix("/admin")
+subMux.Handle("POST /{id}", createAdminHandler)
+subMux.HandleFunc("DELETE /{id}", func(w http.ResponseWriter, r *http.Request) { w.Write("DELETE") })
 ```
 
 Use it as usual
 ```go
-s := http.Server{
-    Addr:    ":8080",
-    Handler: mux,
-}
-
-s.ListenAndServe()
+s.ListenAndServe(":8080", mux)
 ```
 
 > [!TIP]
-> Check out the registered patterns?
-> > ⚠️ Make sure the `Build()` function is called before printing.
+> Check out the registered patterns
 > ```go
-> muxb.PrintRegisteredPatterns()
+> mux.PrintRegisteredPatterns()
 > ```
 >
-> Hm 🤔 `map[string]http.Handler` daaamn ew... 🤢  
-> Why don't define your own type?
-> ```go
-> type P map[string]http.Handler
->
-> muxb.Pattern(P{
->     "GET /a": handlerA,
->     "GET /b": handlerB,
-> })
+> Chaining is also possible
+> ```
+> subMux := mux.Subrouter().Prefix("/v1").Use(Middleware1, Middleware2)
+> subMux.Handle("GET /topic/{id}", getTopicHandler)
 > ```
 
 ## Motivation
