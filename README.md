@@ -3,6 +3,7 @@
 [![test: ubuntu/macos](https://github.com/42LM/muxify/actions/workflows/test-ubuntu-macos.yaml/badge.svg)](https://github.com/42LM/muxify/actions/workflows/test-ubuntu-macos.yaml)
 [![codecov](https://codecov.io/gh/42LM/muxify/graph/badge.svg?token=6CIY6SU7MJ)](https://codecov.io/gh/42LM/muxify)
 [![](https://godoc.org/github.com/42LM/muxify?status.svg)](http://godoc.org/github.com/42LM/muxify)
+[![Go Report Card](https://goreportcard.com/badge/github.com/42LM/muxify)](https://goreportcard.com/report/github.com/42LM/muxify)
 
 <img width="150" alt="muxify" src="https://github.com/user-attachments/assets/5b1d6123-55c9-4e3f-81ee-51ffbea3f9d5" />
 <br>
@@ -65,7 +66,7 @@ s.ListenAndServe(":8080", mux)
 > ```
 >
 > Chaining is also possible
-> ```
+> ```go
 > subMux := mux.Subrouter().Prefix("/v1").Use(Middleware1, Middleware2)
 > subMux.Handle("GET /topic/{id}", getTopicHandler)
 > ```
