@@ -50,12 +50,12 @@ func (mux *Mux) Handle(pattern string, handler http.Handler) {
 // HandleFunc wraps the http.HandleFunc func.
 // It wraps the pattern with prefixes
 // and the handler with middlewares.
-func (mux *Mux) HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request)) {
+func (mux *Mux) HandleFunc(pattern string, handlerFunc func(http.ResponseWriter, *http.Request)) {
 	method, patternPath := splitPattern(pattern)
 	pattern = method + removeDoubleSlash(mux.patternPrefix+patternPath)
 	mux.muxify.Handle(
 		pattern,
-		newHandler(mux.middlewares...)(http.HandlerFunc(handler)),
+		newHandler(mux.middlewares...)(http.HandlerFunc(handlerFunc)),
 	)
 	*mux.registeredPatterns = append(*mux.registeredPatterns, pattern)
 }
