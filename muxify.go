@@ -7,6 +7,7 @@
 package muxify
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -14,9 +15,10 @@ import (
 
 // Mux is a simple wrapper for the http.ServeMux.
 type Mux struct {
-	muxify        *http.ServeMux
-	patternPrefix string
-	middlewares   []Middleware
+	muxify             *http.ServeMux
+	patternPrefix      string
+	middlewares        []Middleware
+	registeredPatterns *[]string
 }
 
 // Middleware represents an http.Handler wrapper to inject addional functionality.
@@ -25,9 +27,75 @@ type Middleware func(http.Handler) http.Handler
 // NewMux returns a new muxify.Mux.
 // This is a simple wrapper for the http.ServeMux.
 func NewMux() *Mux {
+	s := make([]string, 0)
 	return &Mux{
-		muxify: http.NewServeMux(),
+		muxify:             http.NewServeMux(),
+		registeredPatterns: &s,
 	}
+}
+
+// Handle wraps the http.Handle func.
+// It wraps the pattern with prefixes
+// and the handler with middlewares.
+func (mux *Mux) Handle(pattern string, handler http.Handler) {
+	method, patternPath := splitPattern(pattern)
+	pattern = method + removeDoubleSlash(mux.patternPrefix+patternPath)
+	mux.muxify.Handle(
+		pattern,
+		newHandler(mux.middlewares...)(handler),
+	)
+	*mux.registeredPatterns = append(*mux.registeredPatterns, pattern)
+}
+
+// HandleFunc wraps the http.HandleFunc func.
+// It wraps the pattern with prefixes
+// and the handler with middlewares.
+func (mux *Mux) HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request)) {
+	method, patternPath := splitPattern(pattern)
+	pattern = method + removeDoubleSlash(mux.patternPrefix+patternPath)
+	mux.muxify.Handle(
+		pattern,
+		newHandler(mux.middlewares...)(http.HandlerFunc(handler)),
+	)
+	*mux.registeredPatterns = append(*mux.registeredPatterns, pattern)
+}
+
+// Prefix sets a prefix for the mux.
+func (mux *Mux) Prefix(prefix string) *Mux {
+	if len(prefix) > 0 {
+		if prefix[0] != '/' {
+			prefix = "/" + prefix
+		}
+	}
+
+	mux.patternPrefix += prefix
+	return mux
+}
+
+// PrintRegisteredPatterns prints the registered patterns of the http.ServeMux.
+// The Build() method needs to be called before!
+func (mux *Mux) PrintRegisteredPatterns() {
+	fmt.Println("* Registered patterns:", strings.Repeat("*", 47))
+	fmt.Println(strings.Join(*mux.registeredPatterns, "\n"))
+	fmt.Printf("%s\n\n", strings.Repeat("*", 70))
+}
+
+// Implement http.Handler interface.
+func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	mux.muxify.ServeHTTP(w, r)
+}
+
+// Subrouter returns a sub mux.
+func (mux *Mux) Subrouter() *Mux {
+	subMux := &Mux{muxify: mux.muxify, patternPrefix: mux.patternPrefix}
+	subMux.middlewares = append(subMux.middlewares, mux.middlewares...)
+	subMux.registeredPatterns = mux.registeredPatterns
+	return subMux
+}
+
+// Use wraps a middleware to the mux.
+func (mux *Mux) Use(middleware ...Middleware) {
+	mux.middlewares = append(mux.middlewares, middleware...)
 }
 
 // newHandler returns an http.Handler wrapped with given middlewares.
@@ -57,58 +125,7 @@ func splitPattern(pattern string) (method string, patternPath string) {
 	return method, patternPath
 }
 
-// HandleFunc wraps the http.HandleFunc func.
-// It wraps the pattern with prefixes
-// and the handler with middlewares.
-func (mux *Mux) HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request)) {
-	method, patternPath := splitPattern(pattern)
-	mux.muxify.Handle(
-		method+removeDoubleSlash(mux.patternPrefix+patternPath),
-		newHandler(mux.middlewares...)(http.HandlerFunc(handler)),
-	)
-}
-
-// Handle wraps the http.Handle func.
-// It wraps the pattern with prefixes
-// and the handler with middlewares.
-func (mux *Mux) Handle(pattern string, handler http.Handler) {
-	method, patternPath := splitPattern(pattern)
-	mux.muxify.Handle(
-		method+removeDoubleSlash(mux.patternPrefix+patternPath),
-		newHandler(mux.middlewares...)(handler),
-	)
-}
-
 func removeDoubleSlash(text string) string {
 	re := regexp.MustCompile(`//+`)
 	return re.ReplaceAllString(text, "/")
-}
-
-// Use wraps a middleware to the mux.
-func (mux *Mux) Use(middleware ...Middleware) {
-	mux.middlewares = append(mux.middlewares, middleware...)
-}
-
-// Prefix sets a prefix for the mux.
-func (mux *Mux) Prefix(prefix string) *Mux {
-	if len(prefix) > 0 {
-		if prefix[0] != '/' {
-			prefix = "/" + prefix
-		}
-	}
-
-	mux.patternPrefix += prefix
-	return mux
-}
-
-// Subrouter returns a sub mux.
-func (mux *Mux) Subrouter() *Mux {
-	subMux := &Mux{muxify: mux.muxify, patternPrefix: mux.patternPrefix}
-	subMux.middlewares = append(subMux.middlewares, mux.middlewares...)
-	return subMux
-}
-
-// Implement http.Handler interface.
-func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	mux.muxify.ServeHTTP(w, r)
 }
