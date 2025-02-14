@@ -13,6 +13,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{matrix.go-version}}
+          cache: false
 
       - name: Run tests and generate coverage
         run: go test -v -coverprofile=coverage.out ./...
