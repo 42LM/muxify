@@ -9,9 +9,7 @@
 <br>
 <br>
 
-🪄 _**muxify**_ your mux setup in Go! Tiny package for easily building and enhancing the [`http.ServeMux`](https://pkg.go.dev/net/http#ServeMux) with middlewares, subrouters and prefixes.
-
-Make the default `http.ServeMux` setup a breeze in Go 😌!
+🪄 _**muxify**_ your mux setup in Go! _**muxify**_ is a small Go package for making the [`http.ServeMux`](https://pkg.go.dev/net/http#ServeMux) setup simpler. Wrap prefixes and middlewares without clutter. Spin up subrouters for clear organization.
 
 > [!CAUTION]
 > 🚧 Work in progess 🚧
