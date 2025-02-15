@@ -43,12 +43,6 @@ func Test_Bootstrap_below_122(t *testing.T) {
 			expBody:       "POST",
 			expStatusCode: http.StatusOK,
 		},
-		"get with id (test remove double slashes)": {
-			path:          "/a/b/e/d/f",
-			method:        http.MethodDelete,
-			expBody:       "DELETE",
-			expStatusCode: http.StatusOK,
-		},
 		"notfound /": {
 			path:          "/",
 			method:        http.MethodGet,
@@ -65,6 +59,12 @@ func Test_Bootstrap_below_122(t *testing.T) {
 			path:          "/oldschool",
 			expBody:       "oldschool",
 			expStatusCode: http.StatusOK,
+		},
+		"no panic but also no route registered": {
+			path:          "/a/b/e/d/f",
+			method:        http.MethodDelete,
+			expBody:       "not found",
+			expStatusCode: http.StatusNotFound,
 		},
 	}
 	for tname, tc := range testCases {
@@ -98,9 +98,7 @@ func Test_Bootstrap_below_122(t *testing.T) {
 			subMux.HandleFunc("/e", func(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write([]byte("POST"))
 			})
-			subMux.HandleFunc("/e/////d///f//", func(w http.ResponseWriter, r *http.Request) {
-				_, _ = w.Write([]byte("DELETE"))
-			})
+			subMux.HandleFunc("/e/////d///f//", func(w http.ResponseWriter, r *http.Request) {})
 
 			server := httptest.NewServer(mux)
 			defer server.Close()

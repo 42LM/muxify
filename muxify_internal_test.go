@@ -86,47 +86,33 @@ func testMiddleware3(next http.Handler) http.Handler {
 	})
 }
 
-func Test_removeDoubleSlash(t *testing.T) {
-	testCases := map[string]struct {
-		text              string
-		expRemovedSlashes string
-	}{
-		"many slashes": {
-			text:              "//a/////////b////c//",
-			expRemovedSlashes: "/a/b/c/",
-		},
-		"slashes in between": {
-			text:              "a///b///c",
-			expRemovedSlashes: "a/b/c",
-		},
-	}
-	for tname, tc := range testCases {
-		t.Run(tname, func(t *testing.T) {
-			removedSlashes := removeDoubleSlash(tc.text)
-			if removedSlashes != tc.expRemovedSlashes {
-				t.Errorf("\nexpected: %v\ngot: %v\n", tc.expRemovedSlashes, removedSlashes)
-			}
-		})
-	}
-}
-
 func Test_Prefix(t *testing.T) {
 	testCases := map[string]struct {
-		prefix string
+		prefix    string
+		expPrefix string
 	}{
 		"ok - no slash prefix": {
-			prefix: "a",
+			prefix:    "a",
+			expPrefix: "/v1/a",
 		},
 		"ok - slash prefix": {
-			prefix: "/a",
+			prefix:    "/a",
+			expPrefix: "/v1/a",
+		},
+		"ok - let go compiler handle": {
+			prefix:    "//a",
+			expPrefix: "/v1//a",
 		},
 		"ok - empty": {
-			prefix: "//a",
+			prefix:    "",
+			expPrefix: "/v1",
 		},
 	}
 	for tname, tc := range testCases {
 		t.Run(tname, func(t *testing.T) {
-			mux := Mux{}
+			mux := Mux{
+				patternPrefix: "/v1",
+			}
 
 			mux.Prefix(tc.prefix)
 
@@ -138,8 +124,8 @@ func Test_Prefix(t *testing.T) {
 				}
 			}
 
-			if got != tc.prefix {
-				t.Errorf("\nwant: %v\ngot: %v\n", tc.prefix, got)
+			if got != tc.expPrefix {
+				t.Errorf("\nwant: %v\ngot: %v\n", tc.expPrefix, got)
 			}
 		})
 	}

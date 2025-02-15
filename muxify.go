@@ -9,7 +9,6 @@ package muxify
 import (
 	"fmt"
 	"net/http"
-	"regexp"
 	"strings"
 )
 
@@ -39,7 +38,7 @@ func NewMux() *Mux {
 // and the handler with middlewares.
 func (mux *Mux) Handle(pattern string, handler http.Handler) {
 	method, patternPath := splitPattern(pattern)
-	pattern = method + removeDoubleSlash(mux.patternPrefix+patternPath)
+	pattern = method + mux.patternPrefix + patternPath
 	mux.muxify.Handle(
 		pattern,
 		newHandler(mux.middlewares...)(handler),
@@ -52,12 +51,27 @@ func (mux *Mux) Handle(pattern string, handler http.Handler) {
 // and the handler with middlewares.
 func (mux *Mux) HandleFunc(pattern string, handlerFunc func(http.ResponseWriter, *http.Request)) {
 	method, patternPath := splitPattern(pattern)
-	pattern = method + removeDoubleSlash(mux.patternPrefix+patternPath)
+	pattern = method + mux.patternPrefix + patternPath
 	mux.muxify.Handle(
 		pattern,
 		newHandler(mux.middlewares...)(http.HandlerFunc(handlerFunc)),
 	)
 	*mux.registeredPatterns = append(*mux.registeredPatterns, pattern)
+}
+
+// Subrouter returns a sub mux.
+func (mux *Mux) Subrouter() *Mux {
+	return &Mux{
+		muxify:             mux.muxify,
+		patternPrefix:      mux.patternPrefix,
+		middlewares:        mux.middlewares,
+		registeredPatterns: mux.registeredPatterns,
+	}
+}
+
+// Use wraps a middleware to the mux.
+func (mux *Mux) Use(middleware ...Middleware) {
+	mux.middlewares = append(mux.middlewares, middleware...)
 }
 
 // Prefix sets a prefix for the mux.
@@ -85,21 +99,6 @@ func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	mux.muxify.ServeHTTP(w, r)
 }
 
-// Subrouter returns a sub mux.
-func (mux *Mux) Subrouter() *Mux {
-	return &Mux{
-		muxify:             mux.muxify,
-		patternPrefix:      mux.patternPrefix,
-		middlewares:        mux.middlewares,
-		registeredPatterns: mux.registeredPatterns,
-	}
-}
-
-// Use wraps a middleware to the mux.
-func (mux *Mux) Use(middleware ...Middleware) {
-	mux.middlewares = append(mux.middlewares, middleware...)
-}
-
 // newHandler returns an http.Handler wrapped with given middlewares.
 func newHandler(mw ...Middleware) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
@@ -125,9 +124,4 @@ func splitPattern(pattern string) (method string, patternPath string) {
 	}
 
 	return method, patternPath
-}
-
-func removeDoubleSlash(text string) string {
-	re := regexp.MustCompile(`//+`)
-	return re.ReplaceAllString(text, "/")
 }
