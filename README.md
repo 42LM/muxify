@@ -5,14 +5,13 @@
 [![](https://godoc.org/github.com/42LM/muxify?status.svg)](http://godoc.org/github.com/42LM/muxify)
 [![Go Report Card](https://goreportcard.com/badge/github.com/42LM/muxify)](https://goreportcard.com/report/github.com/42LM/muxify)
 
-<img width="150" alt="muxify" src="https://github.com/user-attachments/assets/5b1d6123-55c9-4e3f-81ee-51ffbea3f9d5" />
+<img width="100" alt="muxify" src="https://github.com/user-attachments/assets/5b1d6123-55c9-4e3f-81ee-51ffbea3f9d5" />
 <br>
 <br>
 
-🪄 _**muxify**_ your mux setup in Go! _**muxify**_ is a small Go package for making the [`http.ServeMux`](https://pkg.go.dev/net/http#ServeMux) setup simpler. Wrap prefixes and middlewares without clutter. Spin up subrouters for clean organization.
+🪄 _**muxify**_ your mux setup in Go! _**muxify**_ is a tiny go package that provides a minimal functionality mux that wraps around the go default [`http.ServeMux`](https://pkg.go.dev/net/http#ServeMux). The `muxify.Mux` simplifies and enhances the setup of the `http.ServeMux`.  
 
-> [!CAUTION]
-> 🚧 Work in progess 🚧
+Wrap prefixes and middlewares without clutter. Spin up subrouters for clean organization of the request routing map.
 
 ---
 
@@ -88,7 +87,7 @@ The motivation for this project derives from the following two problems with the
 
 > It is not possible to use the `http.StripPrefix` without defining a pattern for the handler, but sometimes i want to just create a new subrouter from whatever router state.
 >```go
-> router.Handle("GET /ping/", makePingHandler(endpoints, options))
+> router.Handle("GET /ping", makePingHandler(endpoints, options))
 >
 > subrouterV1 := http.NewServeMux()
 > subrouterV1.Handle("/v1/", http.StripPrefix("/v1", router))
