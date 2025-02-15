@@ -18,6 +18,7 @@ func Test_Bootstrap(t *testing.T) {
 		path          string
 		middleware    [](func(http.Handler) http.Handler)
 		method        string
+		panicTest     bool
 		expBody       string
 		expStatusCode int
 	}{
@@ -53,12 +54,6 @@ func Test_Bootstrap(t *testing.T) {
 			expBody:       "DELETE id: 123",
 			expStatusCode: http.StatusOK,
 		},
-		"get with id (test remove double slashes)": {
-			path:          "/a/b/e/d/f/123",
-			method:        http.MethodGet,
-			expBody:       "GET id: 123",
-			expStatusCode: http.StatusOK,
-		},
 		"notfound /": {
 			path:          "/",
 			method:        http.MethodGet,
@@ -70,6 +65,9 @@ func Test_Bootstrap(t *testing.T) {
 			method:        http.MethodGet,
 			expBody:       "not found",
 			expStatusCode: http.StatusNotFound,
+		},
+		"panic": {
+			panicTest: true,
 		},
 	}
 	for tname, tc := range testCases {
@@ -105,10 +103,16 @@ func Test_Bootstrap(t *testing.T) {
 				id := r.PathValue("id")
 				_, _ = w.Write([]byte("DELETE id: " + id))
 			})
-			subMux1.Handle("GET /e/////d///f//{id}", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				id := r.PathValue("id")
-				_, _ = w.Write([]byte("GET id: " + id))
-			}))
+			if tc.panicTest {
+				defer func() {
+					if r := recover(); r == nil {
+						t.Errorf("no panic where panic is expected")
+					}
+				}()
+
+				subMux1.Handle("GET /e/////d///f//", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+				return
+			}
 
 			server := httptest.NewServer(mux)
 			defer server.Close()
